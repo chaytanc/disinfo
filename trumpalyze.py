@@ -13,7 +13,9 @@ file = "trumptweets1205-127.csv"
 n_tweets = 1000
 # Do not change the order of this array
 narratives = ["America is too tolerant of foreigners and nontraditional behaviors", "America needs strong men to lead it", "Russia is an ally"]
-
+# Set the display precision
+pd.options.display.float_format = '{:.2f}'.format
+np.set_printoptions(precision=2, suppress=True)
 
 # class Result():
 #     def __init__(self, tweet, similarities, sim_ind):
@@ -72,16 +74,17 @@ class Results():
 # Show results with highest similarity ratings in any narrative dimension
 results = Results(file, n_tweets, narratives)
 print(results)
-sorted_results = sorted(results.results)
+print(results.results["Similarities"])
+sorted_results = results.results.sort_values(by="Similarities", key=lambda col: col.apply(np.max))
 print("Lowest sims: ", sorted_results[:10])
 print("Highest sims: ", sorted_results[-10:])
 
 # What if I want a function that takes in a particular narrative and sorts based on the highest in that category
 # TODO use similarities matrix
 def sort_by_narrative(narrative_ind, results):
-    sims = results.similarities
-    sims[]
-    return sorted(results, key=lambda result: result.similarities[narrative_ind])
+    narrative_sims = results.results["Similarities"].apply(lambda sim_array: sim_array[narrative_ind])
+    print(narrative_sims.sort_values())
+    return sorted(narrative_sims)
 
 # Use an LLM summary to generate possible narratives
 # https://huggingface.co/Ayush-1722/Meta-Llama-3-8B-Instruct-Summarize-v0.2-16K-LoRANET-Merged
