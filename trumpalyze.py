@@ -14,6 +14,7 @@ file = "syria_articles/wsj_article.txt"
 n_tweets = 1000
 # Do not change the order of this array
 narratives = ["America is too tolerant of foreigners and nontraditional behaviors", "America needs strong men to lead it", "Russia is an ally"]
+state_dept_narratives = ["Russia is an Innocent Victim", "The Collapse of Western Civilization is Imminent", "Popular Movements are U.S.-sponsored Color Revolutions",]
 # Set the display precision
 pd.options.display.float_format = '{:.2f}'.format
 np.set_printoptions(precision=2, suppress=True)
@@ -79,8 +80,9 @@ class Results():
         sorted_tweets, sorted_sims = self.sort_by_narrative(narrative_ind)
         sorted_tweets["Sims"] = sorted_sims
         pd.set_option('display.max_colwidth', None)
-        print("{k} Most similar tweets to narrative \n\"{narrative}\": \n".format(k=k, narrative=self.narratives[narrative_ind]), 
-              sorted_tweets[-k:])
+        print("{k} Most similar tweets to narrative \n\"{narrative}\": \n".format(
+            k=k, narrative=self.narratives[narrative_ind]), 
+            sorted_tweets[-k:])
 
     #def print_results(self, inds):
         #print("Tweets: ", self.tweets[inds])
@@ -102,9 +104,10 @@ results.print_top_k(k=10, narrative_ind=3)
 
 # Compare RT article to WSJ article on same topic wrt generated possible russia narratives or expert narratives
 # eventually use actual disinfo database as baseline
+# TODO replicate findings of some paper
 
 # Go paragraph by paragraph in article and add up similarity score?
 
 # TODO is there a way to inject geopolitical context into comparison? dates & headlines?
 
-# TODO more data
+# TODO more data https://www.thetrumparchive.com/?resultssortOption=%22Latest%22
