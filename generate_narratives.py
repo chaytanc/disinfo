@@ -1,21 +1,26 @@
 import transformers
 from transformers import AutoModelForCausalLM
-import torch
 import pandas as pd
 import numpy as np
 
 from unsloth import FastLanguageModel
 import torch
+import os
 
-offload_folder = "./offload"
+token = os.environ.get("HFTOKEN")
 model_id = "meta-llama/Meta-Llama-3-8B-Instruct"
-model = AutoModelForCausalLM.from_pretrained(
-    #"meta-llama/Meta-Llama-3.1-8B",
-    model_id,
-    offload_folder=offload_folder, 
-    offload_state_dict=True,
-    offload_buffers=True,
-    device_map="auto",) 
+max_seq_length = 2048 # Choose any! We auto support RoPE Scaling internally!
+dtype = None # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
+load_in_4bit = True
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = "unsloth/Meta-Llama-3.1-8B",
+    max_seq_length = max_seq_length,
+    dtype = dtype,
+    load_in_4bit = load_in_4bit,
+    token = token,
+)
+FastLanguageModel.for_inference(model)
+
 sys_prompt = "You should find the narratives in the following batches of tweets"
 file = "trumptweets1205-127.csv"
 
