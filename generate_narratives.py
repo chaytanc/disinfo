@@ -1,27 +1,16 @@
 import transformers
-from transformers import AutoModelForCausalLM
 import pandas as pd
 import numpy as np
 
-from unsloth import FastLanguageModel
-import torch
 import os
 
 token = os.environ.get("HFTOKEN")
 model_id = "meta-llama/Meta-Llama-3-8B-Instruct"
-max_seq_length = 2048 # Choose any! We auto support RoPE Scaling internally!
-dtype = None # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
-load_in_4bit = True
-model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name = "unsloth/Meta-Llama-3.1-8B",
-    max_seq_length = max_seq_length,
-    dtype = dtype,
-    load_in_4bit = load_in_4bit,
-    token = token,
-)
-FastLanguageModel.for_inference(model)
 
-sys_prompt = "You should find the narratives in the following batches of tweets"
+from mlx_lm import load, generate
+
+model, tokenizer = load("mlx-community/Llama-3.2-3B-Instruct-4bit")
+sys_prompt = "You should find the dominant narratives in the following batches of tweets, or synthesize the dominant narratives from the presented summaries. Do not simply summarize each list given (if given a list of narratives instead of raw tweets), but instead find the commonalities between the different lists given and summarize the most dominant narratives from there:\n"
 file = "trumptweets1205-127.csv"
 
 # TODO starting with just tweets
@@ -33,52 +22,58 @@ def preprocess_context_window(file):
             # batch tweets together somehow -- append previously found narratives to the new batch of tweets? Largest batch possible? very small frequent chunks? Enough to get a general sense of thoughts? Very small then aggregate up multiple times?
             pass #TODO
     elif file.endswith(".csv"):
-        df = pd.read_csv(file)
+        df = pd.read_csv(file, encoding='utf-8', encoding_errors='ignore')
         # Create n_tweets / smallest_batch_size chunks of tweets / data
-        chunks = np.array_split(df, np.ceil(len(df) / smallest_batch_size).astype(int))
-    return chunks
+        chunks = chunk_it(df, smallest_batch_size)
+        return chunks
 
-# TODO yaml
-def config_model(model_id):
-    pipeline = transformers.pipeline(
-        "text-generation",
-        model=model,
-        model_kwargs={"torch_dtype": torch.bfloat16},
-        device_map="auto",
-    )
-    terminators = [
-        pipeline.tokenizer.eos_token_id,
-        pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>")
-    ]
-    return pipeline, terminators
+def chunk_it(array, k):
+    return np.array_split(array, np.ceil(len(array) / k).astype(int))
 
-def create_prompt(pipeline, sys_prompt, user_prompt):
+def create_prompt(tokenizer, sys_prompt, user_prompt):
     messages = [
         {"role": "system", "content": sys_prompt},
         {"role": "user", "content": user_prompt},
     ]
     
-    prompt = pipeline.tokenizer.apply_chat_template(
+    prompt = tokenizer.apply_chat_template(
             messages, 
             tokenize=False, 
             add_generation_prompt=True
     )
     return prompt
 
-def process_chunk(chunk, pipeline, terminators):
-    prompt = create_prompt(pipeline, sys_prompt, user_prompt=chunk)
-    outputs = pipeline(
-        prompt,
-        max_new_tokens=256,
-        eos_token_id=terminators,
-        do_sample=True,
-        temperature=0.6,
-        top_p=0.9,
-    )
-    return outputs, prompt
+# TODO yaml
+def process_chunk(chunk, model, tokenizer):
+    prompt = create_prompt(tokenizer, sys_prompt, user_prompt=chunk)
+    response = generate(
+        model, tokenizer, 
+        #temperature=0.9, top_p=0.8, 
+        max_tokens=512, prompt=prompt, 
+        verbose=True)
+    return response, prompt
 
-pipeline, terminators = config_model(model_id)
-chunks = preprocess_context_window(file)
-for chunk in chunks:
-    outputs, prompt = process_chunk(chunk, pipeline, terminators)
-    print(outputs[0]["generated_text\n"][len(prompt):])
+# all_chunks = preprocess_context_window(file)
+# chunks = all_chunks.copy()
+# for chunk in chunks:
+#     outputs, prompt = process_chunk(chunk, model, tokenizer)
+#     print(outputs[0]["generated_text\n"][len(prompt):])
+
+def merge(chunks):
+    print("CHUNK LEN :D", len(chunks))
+    if len(chunks) == 1:
+        return chunks
+
+    new_chunks = [] 
+    for chunk in chunks:
+        resp, _ = process_chunk(chunk, model, tokenizer)
+        new_chunks.append(resp)
+    new_chunks = chunk_it(new_chunks, smallest_batch_size)
+    chunks = merge(new_chunks)
+
+all_chunks = preprocess_context_window(file)
+chunks = merge(all_chunks)
+print(chunks)
+
+
+

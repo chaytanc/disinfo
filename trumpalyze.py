@@ -9,12 +9,12 @@ import numpy as np
 
 # TODO params file yaml
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-#file = "trumptweets1205-127.csv"
-file = "syria_articles/wsj_article.txt"
+file = "trumptweets1205-127.csv"
+# file = "syria_articles/wsj_article.txt"
 n_tweets = 1000
 # Do not change the order of this array
-narratives = ["America is too tolerant of foreigners and nontraditional behaviors", "America needs strong men to lead it", "Russia is an ally"]
-state_dept_narratives = ["Russia is an Innocent Victim", "The Collapse of Western Civilization is Imminent", "Popular Movements are U.S.-sponsored Color Revolutions",]
+# State Dept. Narratives
+narratives = ["Russia is an Innocent Victim", "The Collapse of Western Civilization is Imminent", "Popular Movements are U.S.-sponsored Color Revolutions",]
 # Set the display precision
 pd.options.display.float_format = '{:.2f}'.format
 np.set_printoptions(precision=2, suppress=True)
@@ -83,10 +83,6 @@ class Results():
         print("{k} Most similar tweets to narrative \n\"{narrative}\": \n".format(
             k=k, narrative=self.narratives[narrative_ind]), 
             sorted_tweets[-k:])
-
-    #def print_results(self, inds):
-        #print("Tweets: ", self.tweets[inds])
-        #print("Similarities Matrix (n_tweets x # narratives): ", self.similarities[inds])
 
     def __repr__(self):
         return f"First 10 Results: \n {self.tweets[:10]}"
