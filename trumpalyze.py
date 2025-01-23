@@ -107,3 +107,6 @@ results.print_top_k(k=10, narrative_ind=3)
 # TODO is there a way to inject geopolitical context into comparison? dates & headlines?
 
 # TODO more data https://www.thetrumparchive.com/?resultssortOption=%22Latest%22
+
+# Pipeline: embed tweets, cluster, generate narratives, get similarity score of embedded tweets to narratives
+    # seems redundant but is actually useful for getting de novo narratives and confirming what experts already get

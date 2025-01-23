@@ -1,20 +1,19 @@
-import transformers
 import pandas as pd
 import numpy as np
-
-import os
-
-token = os.environ.get("HFTOKEN")
-model_id = "meta-llama/Meta-Llama-3-8B-Instruct"
-
+from sklearn.cluster import KMeans
 from mlx_lm import load, generate
+from sentence_transformers import SentenceTransformer, util
 
 model, tokenizer = load("mlx-community/Llama-3.2-3B-Instruct-4bit")
-sys_prompt = "You should find the dominant narratives in the following batches of tweets, or synthesize the dominant narratives from the presented summaries. Do not simply summarize each list given (if given a list of narratives instead of raw tweets), but instead find the commonalities between the different lists given and summarize the most dominant narratives from there:\n"
+sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+# Recursion prompt
+#sys_prompt = "You should find the dominant narratives in the following batches of tweets, or synthesize the dominant narratives from the presented summaries. Do not simply summarize each list given (if given a list of narratives instead of raw tweets), but instead find the commonalities between the different lists given and summarize the most dominant narratives from there:\n"
+# Simple prompt
+sys_prompt = "You should find the top two dominant narratives in the following batch of tweets: "
 file = "trumptweets1205-127.csv"
 
-# TODO starting with just tweets
 smallest_batch_size = 10
+num_narratives = 8
 
 def preprocess_context_window(file):
     if file.endswith(".txt"):
@@ -42,6 +41,16 @@ def create_prompt(tokenizer, sys_prompt, user_prompt):
             add_generation_prompt=True
     )
     return prompt
+
+def cluster_embedded_tweets(tweets):
+    embeddings = []
+    for tweet in tweets:
+        embeddings.append(sent_model.encode(tweet, convert_to_numpy=True))
+    clusters = KMeans(n_clusters=num_narratives).fit(embeddings)
+    unique_labels = np.unique(clusters.labels_)
+    # Chunk tweets by cluster labels
+    clustered_tweets = [tweets[clusters.labels_ == label] for label in unique_labels]
+    return clustered_tweets
 
 # TODO yaml
 def process_chunk(chunk, model, tokenizer):
@@ -71,9 +80,16 @@ def merge(chunks):
     new_chunks = chunk_it(new_chunks, smallest_batch_size)
     chunks = merge(new_chunks)
 
-all_chunks = preprocess_context_window(file)
-chunks = merge(all_chunks)
-print(chunks)
+# all_chunks = preprocess_context_window(file)
+# chunks = merge(all_chunks)
+# print(chunks)
+
+df = pd.read_csv(file, encoding='utf-8', encoding_errors='ignore')
+clustered_tweets = cluster_embedded_tweets(df["Tweet"])
+for chunk in clustered_tweets:
+    print(chunk.shape)
+    resp, _ = process_chunk(chunk, model, tokenizer)
+
 
 
 
