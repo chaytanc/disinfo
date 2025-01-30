@@ -7,6 +7,7 @@ from sentence_transformers import SentenceTransformer, util
 import pandas as pd
 import numpy as np
 
+# RQ: Can we show that set X had Y% similarity to Z narrative, which 
 # TODO params file yaml
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 file = "trumptweets1205-127.csv"
@@ -110,3 +111,6 @@ results.print_top_k(k=10, narrative_ind=3)
 
 # Pipeline: embed tweets, cluster, generate narratives, get similarity score of embedded tweets to narratives
     # seems redundant but is actually useful for getting de novo narratives and confirming what experts already get
+
+#TODO semantic similarity of gatewaypundit tweets to trump tweets over time?
+# Where might the transgender military idea come from???

@@ -9,7 +9,7 @@ sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 # Recursion prompt
 #sys_prompt = "You should find the dominant narratives in the following batches of tweets, or synthesize the dominant narratives from the presented summaries. Do not simply summarize each list given (if given a list of narratives instead of raw tweets), but instead find the commonalities between the different lists given and summarize the most dominant narratives from there:\n"
 # Simple prompt
-sys_prompt = "You should find the top two dominant narratives in the following batch of tweets: "
+sys_prompt = "You should find the top two dominant narratives in the following batch of tweets. Do not cite which tweets correspond to the narratives, just supply the narrative summaries "
 file = "trumptweets1205-127.csv"
 
 smallest_batch_size = 10
@@ -92,4 +92,7 @@ for chunk in clustered_tweets:
 
 
 
+#TODO LLM Validation: 
+    # Have people randomly sample tweets from the batches and agree or disagree with the top 2 narratives presented (and write in alternative if desired)
 
+# TODO filter out retweets / response tweets? Adjust prompt to account for this? For example, respondign to fake news CNN tweets criticizing his policies are confusing the LLM
