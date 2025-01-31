@@ -1,98 +1,117 @@
 import pandas as pd
 import numpy as np
+from mlx_lm import generate
 from sklearn.cluster import KMeans
-from mlx_lm import load, generate
-from sentence_transformers import SentenceTransformer, util
+# from sentence_transformers import SentenceTransformer, util
+from transformers import pipeline
 
-model, tokenizer = load("mlx-community/Llama-3.2-3B-Instruct-4bit")
-sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-# Recursion prompt
-#sys_prompt = "You should find the dominant narratives in the following batches of tweets, or synthesize the dominant narratives from the presented summaries. Do not simply summarize each list given (if given a list of narratives instead of raw tweets), but instead find the commonalities between the different lists given and summarize the most dominant narratives from there:\n"
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.prompts import PromptTemplate
+from pydantic import BaseModel, Field
+from langchain_huggingface import HuggingFacePipeline
+from langchain_community.llms.mlx_pipeline import MLXPipeline
+
 # Simple prompt
-sys_prompt = "You should find the top two dominant narratives in the following batch of tweets. Do not cite which tweets correspond to the narratives, just supply the narrative summaries "
-file = "trumptweets1205-127.csv"
+SYS_PROMPT = "You should find the top two dominant narratives in the following batch of tweets. Do not cite which tweets correspond to the narratives, just supply the narrative summaries "
+# OUTPUT_PARSE_PROMPT = "Structure your response as a JSON object with {'narrative 1': value, 'narrative 2', value}"
 
 smallest_batch_size = 10
-num_narratives = 8
 
-def preprocess_context_window(file):
-    if file.endswith(".txt"):
-        with open(file, "r") as f:
-            # batch tweets together somehow -- append previously found narratives to the new batch of tweets? Largest batch possible? very small frequent chunks? Enough to get a general sense of thoughts? Very small then aggregate up multiple times?
-            pass #TODO
-    elif file.endswith(".csv"):
-        df = pd.read_csv(file, encoding='utf-8', encoding_errors='ignore')
-        # Create n_tweets / smallest_batch_size chunks of tweets / data
-        chunks = chunk_it(df, smallest_batch_size)
-        return chunks
+class Narrative_Generator():
+    def __init__(self, summary_model, tokenizer, embedding_model, file, num_narratives):
+        self.summary_model = summary_model
+        self.tokenizer = tokenizer
+        self.embedding_model = embedding_model
+        self.num_narratives = num_narratives
+        self.df = pd.read_csv(file, encoding='utf-8', encoding_errors='ignore')
+        # You could use preprocess_context_window here instead if data is too big...
 
-def chunk_it(array, k):
-    return np.array_split(array, np.ceil(len(array) / k).astype(int))
+    def preprocess_context_window(self, file):
+        if file.endswith(".txt"):
+            with open(file, "r") as f:
+                #TODO batch tweets together somehow -- append previously found narratives to the new batch of tweets? Largest batch possible? very small frequent chunks? Enough to get a general sense of thoughts? Very small then aggregate up multiple times?
+                pass
+        elif file.endswith(".csv"):
+            df = pd.read_csv(file, encoding='utf-8', encoding_errors='ignore')
+            # Create n_tweets / smallest_batch_size chunks of tweets / data
+            chunks = self.chunk_it(df, smallest_batch_size)
+            return chunks
 
-def create_prompt(tokenizer, sys_prompt, user_prompt):
-    messages = [
-        {"role": "system", "content": sys_prompt},
-        {"role": "user", "content": user_prompt},
-    ]
+    def chunk_it(self, array, k):
+        return np.array_split(array, np.ceil(len(array) / k).astype(int))
+
+    def create_prompt(self, tokenizer, user_prompt):
+        messages = [
+            {"role": "system", "content": SYS_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
+        
+        prompt = tokenizer.apply_chat_template(
+                messages, 
+                tokenize=False, 
+                add_generation_prompt=True
+        )
+        return prompt
+
+    def create_format_prompt(self, parser):
+        prompt = PromptTemplate(
+            template= SYS_PROMPT+"\n{format_instructions}\n{query}\n",
+            input_variables=["query"],
+            partial_variables={"format_instructions": parser.get_format_instructions()},
+        )
+        return prompt
+
+    def cluster_embedded_tweets(self, tweets):
+        embeddings = []
+        for tweet in tweets:
+            embeddings.append(self.embedding_model.encode(tweet, convert_to_numpy=True))
+        clusters = KMeans(n_clusters=self.num_narratives).fit(embeddings)
+        unique_labels = np.unique(clusters.labels_)
+        # Chunk tweets by cluster labels
+        clustered_tweets = [tweets[clusters.labels_ == label] for label in unique_labels]
+        return clustered_tweets
+
+    # TODO yaml
+    # TODO private functions
+    def process_chunk(self, chunk, model, tokenizer):
+        prompt = self.create_prompt(tokenizer, SYS_PROMPT, user_prompt=chunk)
+        response = generate(
+            model, tokenizer, 
+            #temperature=0.9, top_p=0.8, 
+            max_tokens=512, prompt=prompt, 
+            verbose=True)
+        return response, prompt
+
+    def generate_narratives(self):
+        # Set up a parser + inject instructions into the prompt template.
+        parser = JsonOutputParser(pydantic_object=self.NarrativeSummary)
+        # pipe = pipeline("summarization", model=self.summary_model, tokenizer=self.tokenizer, temperature=0.1)
+        # llm = HuggingFacePipeline(pipeline=pipe)
+        llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer, pipeline_kwargs={"temp": 0.1})
+        prompt = self.create_format_prompt(parser)
+        chain = prompt | llm | parser
+
+        # What happens when we have way more than 300 tweets? Can we still cluster 50,000 or do we chunk it by time and regen narratives?
+        clustered_tweets = self.cluster_embedded_tweets(self.df["Tweet"])
+        for chunk in clustered_tweets:
+            # resp, prompt = process_chunk(chunk, self.summary_model, self.tokenizer)
+            resp = chain.invoke({"query": chunk})
+        return resp, prompt
     
-    prompt = tokenizer.apply_chat_template(
-            messages, 
-            tokenize=False, 
-            add_generation_prompt=True
-    )
-    return prompt
-
-def cluster_embedded_tweets(tweets):
-    embeddings = []
-    for tweet in tweets:
-        embeddings.append(sent_model.encode(tweet, convert_to_numpy=True))
-    clusters = KMeans(n_clusters=num_narratives).fit(embeddings)
-    unique_labels = np.unique(clusters.labels_)
-    # Chunk tweets by cluster labels
-    clustered_tweets = [tweets[clusters.labels_ == label] for label in unique_labels]
-    return clustered_tweets
-
-# TODO yaml
-def process_chunk(chunk, model, tokenizer):
-    prompt = create_prompt(tokenizer, sys_prompt, user_prompt=chunk)
-    response = generate(
-        model, tokenizer, 
-        #temperature=0.9, top_p=0.8, 
-        max_tokens=512, prompt=prompt, 
-        verbose=True)
-    return response, prompt
-
-# all_chunks = preprocess_context_window(file)
-# chunks = all_chunks.copy()
-# for chunk in chunks:
-#     outputs, prompt = process_chunk(chunk, model, tokenizer)
-#     print(outputs[0]["generated_text\n"][len(prompt):])
-
-def merge(chunks):
-    print("CHUNK LEN :D", len(chunks))
-    if len(chunks) == 1:
-        return chunks
-
-    new_chunks = [] 
-    for chunk in chunks:
-        resp, _ = process_chunk(chunk, model, tokenizer)
-        new_chunks.append(resp)
-    new_chunks = chunk_it(new_chunks, smallest_batch_size)
-    chunks = merge(new_chunks)
-
-# all_chunks = preprocess_context_window(file)
-# chunks = merge(all_chunks)
-# print(chunks)
-
-df = pd.read_csv(file, encoding='utf-8', encoding_errors='ignore')
-clustered_tweets = cluster_embedded_tweets(df["Tweet"])
-for chunk in clustered_tweets:
-    print(chunk.shape)
-    resp, _ = process_chunk(chunk, model, tokenizer)
+    # Define your desired data structure.
+    class NarrativeSummary(BaseModel):
+        narrative1: str = Field(description="Most dominant narrative")
+        narrative2: str = Field(description="Second dominant narrative")
 
 
+
+# For tweet in timeline of tweets, sim score to each of X number of generated narratives, and add to list
+    # Plot each list of similarities to narrative over time
 
 #TODO LLM Validation: 
     # Have people randomly sample tweets from the batches and agree or disagree with the top 2 narratives presented (and write in alternative if desired)
+#TODO Similarity validation
+    # Given valid narratives, have people code tweets as belonging to or not belonging to those
+
 
 # TODO filter out retweets / response tweets? Adjust prompt to account for this? For example, respondign to fake news CNN tweets criticizing his policies are confusing the LLM
