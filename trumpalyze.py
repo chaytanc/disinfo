@@ -27,7 +27,6 @@ num_narratives = 8
 narratives = ["Russia is an Innocent Victim", "The Collapse of Western Civilization is Imminent", "Popular Movements are U.S.-sponsored Color Revolutions",]
 trump_nars, _ = Narrative_Generator(summary_model, tokenizer, sent_model, file, num_narratives).generate_narratives()
 
-
 # Show results with highest similarity ratings in any narrative dimension
 results = Results(file, max_tweets, narratives)
 results.print_top_k(k=10, narrative_ind=3)

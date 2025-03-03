@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from sentence_transformers import util
 
 class Results():
     def __init__(self, model, tweet_file, n_tweets, narratives):
