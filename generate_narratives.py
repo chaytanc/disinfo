@@ -99,9 +99,9 @@ class Narrative_Generator():
         # llm = HuggingFacePipeline(pipeline=pipe)
         # llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer, pipeline_kwargs={"temp": 0.1})
         # llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer, pipeline_kwargs={"max_tokens": 50, "temp": None})
-        llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer)
+        llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer, pipeline_kwargs={"response_format" :
+          {"type": "json_object",}})
         prompt = self.create_format_prompt(parser)
-        chain = prompt | llm | parser
         chain = prompt | llm
 
         # What happens when we have way more than 300 tweets? Can we still cluster 50,000 or do we chunk it by time and regen narratives?
@@ -109,13 +109,7 @@ class Narrative_Generator():
         for chunk in clustered_tweets:
             # resp, prompt = process_chunk(chunk, self.summary_model, self.tokenizer)
             resp = chain.invoke({"query": chunk})
-            try:
-                parser.parse(resp)
-            except OutputParserException as e:
-                print(e)
-                new_parser = OutputFixingParser.from_llm(parser=parser, llm=ChatOllama(model="deepseek-r1",
-    temperature=0.8, num_predict=256))
-                new_parser.parse(resp)
+            print(resp)
         return resp, prompt
     
     # Define your desired data structure.

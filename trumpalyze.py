@@ -17,7 +17,8 @@ np.set_printoptions(precision=2, suppress=True)
 # RQ: Can we show that set X had Y% similarity to Z narrative, which 
 # TODO params file yaml
 file = "trumptweets1205-127.csv"
-summary_model, tokenizer = load("mlx-community/Llama-3.2-3B-Instruct-4bit")
+# TODO replace with deepseek r1
+summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
 sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 # file = "syria_articles/wsj_article.txt"
 max_tweets = 1000
@@ -28,7 +29,7 @@ narratives = ["Russia is an Innocent Victim", "The Collapse of Western Civilizat
 trump_nars, _ = Narrative_Generator(summary_model, tokenizer, sent_model, file, num_narratives).generate_narratives()
 
 # Show results with highest similarity ratings in any narrative dimension
-results = Results(file, max_tweets, narratives)
+results = Results(sent_model, file, max_tweets, narratives)
 results.print_top_k(k=10, narrative_ind=3)
 
 # Use an LLM summary to generate possible narratives
