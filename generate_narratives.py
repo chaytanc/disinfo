@@ -10,10 +10,12 @@ from langchain_core.prompts import PromptTemplate
 from pydantic import BaseModel, Field
 from langchain_huggingface import HuggingFacePipeline
 from langchain_community.llms.mlx_pipeline import MLXPipeline
-from langchain_core.exceptions import OutputParserException
-from langchain.output_parsers import OutputFixingParser
-from langchain_openai import ChatOpenAI
-from langchain_ollama import ChatOllama
+# from langchain_core.exceptions import OutputParserException
+# from langchain.output_parsers import OutputFixingParser
+# from langchain_openai import ChatOpenAI
+# from langchain_ollama import ChatOllama
+import json
+import re
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -29,7 +31,16 @@ class Narrative_Generator():
         self.tokenizer = tokenizer
         self.embedding_model = embedding_model
         self.num_narratives = num_narratives
-        self.df = pd.read_csv(file, encoding='utf-8', encoding_errors='ignore')
+        
+        # Try loading the file, handle errors gracefully
+        try:
+            self.df = pd.read_csv(file, encoding="utf-8", encoding_errors="ignore")
+        except FileNotFoundError:
+            raise ValueError(f"Error: The file '{file}' was not found.")
+        except pd.errors.EmptyDataError:
+            raise ValueError(f"Error: The file '{file}' is empty or corrupted.")
+        except Exception as e:
+            raise ValueError(f"Error loading file '{file}': {e}")
         # You could use preprocess_context_window here instead if data is too big...
 
     def preprocess_context_window(self, file):
@@ -95,22 +106,103 @@ class Narrative_Generator():
     def generate_narratives(self):
         # Set up a parser + inject instructions into the prompt template.
         parser = JsonOutputParser(pydantic_object=self.NarrativeSummary)
-        # pipe = pipeline("summarization", model=self.summary_model, tokenizer=self.tokenizer, temperature=0.1)
-        # llm = HuggingFacePipeline(pipeline=pipe)
-        # llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer, pipeline_kwargs={"temp": 0.1})
-        # llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer, pipeline_kwargs={"max_tokens": 50, "temp": None})
         llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer, pipeline_kwargs={"response_format" :
           {"type": "json_object",}})
         prompt = self.create_format_prompt(parser)
-        chain = prompt | llm
+        chain = prompt | llm | self.parse_json_objects 
+        #TODO use parser object or chain to custom parse_narratives thing?
 
         # What happens when we have way more than 300 tweets? Can we still cluster 50,000 or do we chunk it by time and regen narratives?
         clustered_tweets = self.cluster_embedded_tweets(self.df["Tweet"])
+        responses = []
         for chunk in clustered_tweets:
             # resp, prompt = process_chunk(chunk, self.summary_model, self.tokenizer)
             resp = chain.invoke({"query": chunk})
+            # TODO remove print
             print(resp)
-        return resp, prompt
+            responses.append(resp[0])
+        return responses, prompt
+
+    def format(self, raw_narratives):
+
+        # TODO
+        # def remove_duplicate_narratives(narratives):
+        #     seen = set()
+        #     unique_narratives = []
+        #     for narrative in narratives:
+        #         # Convert dictionary to a tuple of its items to make it hashable
+        #         narrative_tuple = tuple(narrative.items())
+        #         if narrative_tuple not in seen:
+        #             seen.add(narrative_tuple)
+        #             unique_narratives.append(narrative)
+        #     return unique_narratives
+        # unique = remove_duplicate_narratives(raw_narratives)
+        formatted_output = ""
+        # Loop through the outer list (each narrative set)
+        for idx, narrative_set in enumerate(raw_narratives, 1):
+            if not narrative_set:  # Skip empty lists
+                continue
+
+            formatted_output += f"### Narrative Set {idx}\n"
+
+            # Loop through each narrative (which is a dictionary)
+            for key, value in narrative_set.items():
+                formatted_output += f"- **{key.replace('_', ' ').capitalize()}**: {value}\n"
+
+            formatted_output += "\n---\n\n"
+
+        return formatted_output.strip()
+
+    def parse_json_objects(self, text):
+        """
+        Identifies JSON objects between curly braces and attempts to parse them.
+        Returns a list of successfully parsed JSON objects.
+        Raises an error if parsing any JSON object fails, but continues processing others.
+        """
+        # Regex to find JSON objects between curly braces {}
+        json_objects = re.findall(r'\{.*?\}', text, re.DOTALL)
+        
+        parsed_json_list = []  # To store successfully parsed JSON objects
+
+        # Loop through each potential JSON object
+        for json_str in json_objects:
+            try:
+                # Try parsing the JSON string
+                parsed_json = json.loads(json_str)
+                parsed_json_list.append(parsed_json)
+            except json.JSONDecodeError as e:
+                print(f"Error parsing JSON: {e}. Skipping invalid JSON object.")
+                continue  # Skip the invalid JSON and continue processing other objects
+
+        return parsed_json_list
+
+
+    def parse_narratives(self, raw_narratives):
+        """
+        Parses a list of JSON strings into Python dictionaries
+        and returns a formatted markdown string + a downloadable JSON file.
+        """
+        formatted_output = ""
+        json_list = []
+
+        for i, json_str in enumerate(raw_narratives, 1):
+            try:
+                narrative_obj = json.loads(json_str)  # Convert JSON string to dict
+                json_list.append(narrative_obj)
+
+                formatted_output += f"### Narrative Set {i}\n"
+                for key, value in narrative_obj.items():
+                    formatted_output += f"- **{key.replace('_', ' ').capitalize()}**: {value}\n"
+                formatted_output += "\n---\n\n"
+            except json.JSONDecodeError:
+                formatted_output += f"⚠️ Error parsing narrative {i}: {json_str}\n\n"
+
+        # Save JSON for download
+        json_file = "generated_narratives.json"
+        with open(json_file, "w") as f:
+            json.dump(json_list, f, indent=4)
+
+        return formatted_output.strip(), json_file
     
     # Define your desired data structure.
     class NarrativeSummary(BaseModel):

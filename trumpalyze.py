@@ -17,25 +17,24 @@ np.set_printoptions(precision=2, suppress=True)
 # RQ: Can we show that set X had Y% similarity to Z narrative, which 
 # TODO params file yaml
 file = "trumptweets1205-127.csv"
-# TODO replace with deepseek r1
 summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
 sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 # file = "syria_articles/wsj_article.txt"
 max_tweets = 1000
-num_narratives = 8
+num_narratives = 3
 # Do not change the order of this array
 # State Dept. Narratives
 narratives = ["Russia is an Innocent Victim", "The Collapse of Western Civilization is Imminent", "Popular Movements are U.S.-sponsored Color Revolutions",]
-trump_nars, _ = Narrative_Generator(summary_model, tokenizer, sent_model, file, num_narratives).generate_narratives()
+def run_narrative_generation(file):
+    generator = Narrative_Generator(summary_model, tokenizer, sent_model, file, num_narratives)
+    trump_nars, _ = generator.generate_narratives()
+    formatted = generator.format(trump_nars)
+    return formatted
 
+print(run_narrative_generation(file))
 # Show results with highest similarity ratings in any narrative dimension
 results = Results(sent_model, file, max_tweets, narratives)
-results.print_top_k(k=10, narrative_ind=3)
-
-# Use an LLM summary to generate possible narratives
-# https://huggingface.co/Ayush-1722/Meta-Llama-3-8B-Instruct-Summarize-v0.2-16K-LoRANET-Merged
-# see chatgpt logs for prototyping
-# https://chatgpt.com/c/6779fbe0-4960-800d-afe2-f5902b41de77
+results.print_top_k(k=10, narrative_ind=0)
 
 # Compare RT article to WSJ article on same topic wrt generated possible russia narratives or expert narratives
 # eventually use actual disinfo database as baseline

@@ -11,9 +11,11 @@ class Results():
             print("Number of tweets selected is greater than total.\
                   \nContinuing with {num} tweets total.".format(num=n_tweets))
         self.n_tweets = n_tweets
-        self.similarities = np.empty((self.n_tweets, len(narratives)))
+        # TODO!!
+        self.narratives = ["Russia is an ally", "the 2020 election was stolen"]
+        self.similarities = np.empty((self.n_tweets, len(self.narratives)))
         self.tweets = pd.DataFrame(columns=["Tweet", "Sim_Index"])
-        self.narratives = narratives
+        # self.narratives = narratives
         # This should really be called by the user but what good is the results class if it has none ?
         self.get_results()
 
@@ -66,6 +68,7 @@ class Results():
         print("{k} Most similar tweets to narrative \n\"{narrative}\": \n".format(
             k=k, narrative=self.narratives[narrative_ind]), 
             sorted_tweets[-k:])
+        return sorted_tweets[-k:]
 
     def __repr__(self):
         return f"First 10 Results: \n {self.tweets[:10]}"
