@@ -12,10 +12,10 @@ class Results():
                   \nContinuing with {num} tweets total.".format(num=n_tweets))
         self.n_tweets = n_tweets
         # TODO!!
-        self.narratives = ["Russia is an ally", "the 2020 election was stolen"]
+        # self.narratives = ["Russia is an ally", "the 2020 election was stolen"]
+        self.narratives = narratives
         self.similarities = np.empty((self.n_tweets, len(self.narratives)))
         self.tweets = pd.DataFrame(columns=["Tweet", "Sim_Index"])
-        # self.narratives = narratives
         # This should really be called by the user but what good is the results class if it has none ?
         self.get_results()
 
