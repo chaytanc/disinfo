@@ -103,40 +103,37 @@ class Narrative_Generator():
             verbose=True)
         return response, prompt
 
-    def generate_narratives(self):
+    def generate_narratives(self, progress=None):
         # Set up a parser + inject instructions into the prompt template.
         parser = JsonOutputParser(pydantic_object=self.NarrativeSummary)
         llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer, pipeline_kwargs={"response_format" :
           {"type": "json_object",}})
         prompt = self.create_format_prompt(parser)
         chain = prompt | llm | self.parse_json_objects 
-        #TODO use parser object or chain to custom parse_narratives thing?
 
         # What happens when we have way more than 300 tweets? Can we still cluster 50,000 or do we chunk it by time and regen narratives?
         clustered_tweets = self.cluster_embedded_tweets(self.df["Tweet"])
         responses = []
-        for chunk in clustered_tweets:
-            # resp, prompt = process_chunk(chunk, self.summary_model, self.tokenizer)
-            resp = chain.invoke({"query": chunk})
-            # TODO remove print
-            print(resp)
-            responses.append(resp[0])
-        return responses, prompt
+        if progress != None:
+            for chunk in progress.tqdm(clustered_tweets):
+                # resp, prompt = process_chunk(chunk, self.summary_model, self.tokenizer)
+                resp = chain.invoke({"query": chunk})
+                # TODO remove print
+                print(resp)
+                if not resp:
+                    continue
+                responses.append(resp[0])
+        else:
+            for chunk in (clustered_tweets):
+                resp = chain.invoke({"query": chunk})
+                if not resp:
+                    continue
+                responses.append(resp[0])
+ 
+        return responses, prompt, clustered_tweets
 
     def format(self, raw_narratives):
-
-        # TODO
-        # def remove_duplicate_narratives(narratives):
-        #     seen = set()
-        #     unique_narratives = []
-        #     for narrative in narratives:
-        #         # Convert dictionary to a tuple of its items to make it hashable
-        #         narrative_tuple = tuple(narrative.items())
-        #         if narrative_tuple not in seen:
-        #             seen.add(narrative_tuple)
-        #             unique_narratives.append(narrative)
-        #     return unique_narratives
-        # unique = remove_duplicate_narratives(raw_narratives)
+        # Formats to markdown for direct display as a string.
         formatted_output = ""
         # Loop through the outer list (each narrative set)
         for idx, narrative_set in enumerate(raw_narratives, 1):
@@ -152,6 +149,39 @@ class Narrative_Generator():
             formatted_output += "\n---\n\n"
 
         return formatted_output.strip()
+
+
+    def get_html_formatted_outputs(self, raw_narratives):
+        outputs = []
+        for idx, narrative_set in enumerate(raw_narratives, 1):
+            if not narrative_set:  # Skip empty lists
+                continue
+            
+            # Start a container div for each narrative pair
+            formatted_output = f"<div class='narrative-block' data-narrative-id='{idx}'>"
+            formatted_output += "<hr class='narrative-separator'>" 
+
+            for key, value in narrative_set.items():
+                formatted_output += f"""
+                <div class='narrative-item'>
+                    <strong>{key.replace('_', ' ').capitalize()}:</strong>
+                    <p>{value}</p>
+                </div>
+                """
+
+            formatted_output += "</div>"  # Close block div
+            outputs.append(formatted_output)
+
+        return outputs
+
+
+    def save_json_narratives(self, json_list):
+        # Save JSON for download
+        json_file = "generated_narratives.json"
+        with open(json_file, "w") as f:
+            json.dump(json_list, f, indent=4)
+        return json_file
+
 
     def parse_json_objects(self, text):
         """
@@ -177,37 +207,37 @@ class Narrative_Generator():
         return parsed_json_list
 
 
-    def parse_narratives(self, raw_narratives):
-        """
-        Parses a list of JSON strings into Python dictionaries
-        and returns a formatted markdown string + a downloadable JSON file.
-        """
-        formatted_output = ""
-        json_list = []
+    # def parse_narratives(self, raw_narratives):
+    #     """
+    #     Parses a list of JSON strings into Python dictionaries
+    #     and returns a formatted markdown string + a downloadable JSON file.
+    #     """
+    #     formatted_output = ""
+    #     json_list = []
 
-        for i, json_str in enumerate(raw_narratives, 1):
-            try:
-                narrative_obj = json.loads(json_str)  # Convert JSON string to dict
-                json_list.append(narrative_obj)
+    #     for i, json_str in enumerate(raw_narratives, 1):
+    #         try:
+    #             narrative_obj = json.loads(json_str)  # Convert JSON string to dict
+    #             json_list.append(narrative_obj)
 
-                formatted_output += f"### Narrative Set {i}\n"
-                for key, value in narrative_obj.items():
-                    formatted_output += f"- **{key.replace('_', ' ').capitalize()}**: {value}\n"
-                formatted_output += "\n---\n\n"
-            except json.JSONDecodeError:
-                formatted_output += f"⚠️ Error parsing narrative {i}: {json_str}\n\n"
+    #             formatted_output += f"### Narrative Set {i}\n"
+    #             for key, value in narrative_obj.items():
+    #                 formatted_output += f"- **{key.replace('_', ' ').capitalize()}**: {value}\n"
+    #             formatted_output += "\n---\n\n"
+    #         except json.JSONDecodeError:
+    #             formatted_output += f"⚠️ Error parsing narrative {i}: {json_str}\n\n"
 
-        # Save JSON for download
-        json_file = "generated_narratives.json"
-        with open(json_file, "w") as f:
-            json.dump(json_list, f, indent=4)
+    #     # Save JSON for download
+    #     json_file = "generated_narratives.json"
+    #     with open(json_file, "w") as f:
+    #         json.dump(json_list, f, indent=4)
 
-        return formatted_output.strip(), json_file
+    #     return formatted_output.strip(), json_file
     
     # Define your desired data structure.
     class NarrativeSummary(BaseModel):
-        narrative1: str = Field(description="Most dominant narrative")
-        narrative2: str = Field(description="Second dominant narrative")
+        narrative_1: str = Field(description="Most dominant narrative")
+        narrative_2: str = Field(description="Second dominant narrative")
 
 # For tweet in timeline of tweets, sim score to each of X number of generated narratives, and add to list
     # Plot each list of similarities to narrative over time

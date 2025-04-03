@@ -1,0 +1,19 @@
+.narrative-separator {
+    border: none;
+    height: 2px;
+    background: linear-gradient(to right, #ccc, #666, #ccc);
+    margin: 20px 0;
+}
+.narrative-block {
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+    background: #f8f9fa;
+}
+.narrative-item {
+    margin-top: 5px;
+}
+.narrative-item p {
+    margin: 0;
+    color: #333;
+}

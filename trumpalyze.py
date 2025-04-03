@@ -27,7 +27,7 @@ num_narratives = 3
 narratives = ["Russia is an Innocent Victim", "The Collapse of Western Civilization is Imminent", "Popular Movements are U.S.-sponsored Color Revolutions",]
 def run_narrative_generation(file):
     generator = Narrative_Generator(summary_model, tokenizer, sent_model, file, num_narratives)
-    trump_nars, _ = generator.generate_narratives()
+    trump_nars, _, _ = generator.generate_narratives()
     formatted = generator.format(trump_nars)
     return formatted
 

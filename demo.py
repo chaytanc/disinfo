@@ -4,6 +4,11 @@ from sentence_transformers import SentenceTransformer
 import pandas as pd
 from mlx_lm import load 
 from sim_scores import Results
+from flask import Flask, jsonify
+
+# Global variables to store results
+formatted_narratives = None
+clustered_tweets = None
 
 dataset_options = {
     "Trump Tweets": "trumptweets1205-127.csv",
@@ -18,8 +23,9 @@ narrative_options = {
 
 summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
 embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-# Define function that Gradio calls
-def run_narrative_generation(selected_dataset, uploaded_file, num_narratives):
+
+def run_narrative_generation(selected_dataset, uploaded_file, num_narratives, progress=gr.Progress()):
+    progress(0, desc="Generating narratives...")
     file_path = dataset_options.get(selected_dataset, None)
     if selected_dataset == "Upload Your Own":
         if uploaded_file is None:
@@ -28,12 +34,23 @@ def run_narrative_generation(selected_dataset, uploaded_file, num_narratives):
 
     generator = Narrative_Generator(summary_model, tokenizer, embedding_model, file_path, num_narratives)
     try:
-        json_narratives, _ = generator.generate_narratives()
-        formatted = generator.format(json_narratives)
-        return formatted
+        json_narratives, _, clustered_tweets = generator.generate_narratives(progress=progress)
+        formatted_narratives = generator.get_html_formatted_outputs(json_narratives)
 
+        html_output = "<div id='narratives-container' style='display: flex; flex-direction: column; gap: 10px;'>"
+        for narrative_html in formatted_narratives:
+            html_output += narrative_html 
+        html_output += "</div>"
+        # Store the results globally
+
+        formatted_narratives = json_narratives 
+        clustered_tweets = clustered_tweets
+
+        return html_output, clustered_tweets
+    # Show error in UI
     except ValueError as e:
-        return str(e), None  # Show error in UI
+        return str(e), None 
+
 
 def trace_narrative(selected_dataset, narrative, max_tweets):
     """
@@ -65,7 +82,8 @@ with gr.Blocks() as iface:
                 gr.Slider(1, 10, step=1, value=5, label="Number of Narratives"),
             ],
             outputs=[
-                gr.Markdown(label="Generated Narratives"),
+                gr.HTML(label="Generated Narratives"),
+                gr.JSON(label="Clustered Tweets")    
             ],
             title="Trump Narrative Generator",
             description="Choose a dataset or upload a file. Select the number of narratives, then click 'Run'.",
@@ -89,5 +107,19 @@ with gr.Blocks() as iface:
             theme="huggingface"
         )
 
-iface.launch()
+    # def get_narratives():
+    #     if formatted_narratives is not None and clustered_tweets is not None:
+    #         return jsonify({
+    #             "generated_narratives": formatted_narratives,  # This is the narratives output from the function
+    #             "clustered_tweets": clustered_tweets           # This is the corresponding tweets list
+    #         })
+    #     else:
+    #         return jsonify({"error": "No narratives generated yet"}), 400
 
+    gr.HTML("""
+        <link rel="stylesheet" type="text/css" href="assets/style.css">
+        <script src="assets/script.js"></script>
+        """)
+
+# iface.launch(share=False, inbrowser=True, server_name="localhost", server_port=7860, prevent_thread_lock=True)
+iface.launch()
