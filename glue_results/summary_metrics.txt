@@ -1,0 +1,7 @@
+Model: sentence-transformers/all-MiniLM-L6-v2
+Dataset: GLUE STS-B (validation split)
+Pearson correlation: 0.8696 (p=0.0000e+00)
+Spearman correlation: 0.8672 (p=0.0000e+00)
+Mean Squared Error: 0.0316
+Mean Absolute Error: 0.1383
+Number of examples: 1500

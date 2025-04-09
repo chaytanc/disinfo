@@ -1,0 +1,213 @@
+
+    <html>
+    <head>
+        <style>
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                margin-bottom: 20px;
+            }
+            th, td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+            }
+            th {
+                background-color: #f2f2f2;
+            }
+            tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+            .excellent {
+                background-color: #d4edda;
+            }
+            .good {
+                background-color: #d1ecf1;
+            }
+            .fair {
+                background-color: #fff3cd;
+            }
+            .poor {
+                background-color: #f8d7da;
+            }
+            .metrics {
+                font-size: 1.2em;
+                margin: 20px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Embedding Model Evaluation Report</h1>
+        <div class="metrics">
+            <p><strong>Pearson Correlation:</strong> 0.8696 (p=0.0000e+00)</p>
+            <p><strong>Spearman Correlation:</strong> 0.8672 (p=0.0000e+00)</p>
+            <p><strong>Mean Squared Error:</strong> 0.0316</p>
+            <p><strong>Mean Absolute Error:</strong> 0.1383</p>
+        </div>
+        
+        <h2>Example Predictions</h2>
+        <table>
+            <tr>
+                <th>Performance</th>
+                <th>Sentence 1</th>
+                <th>Sentence 2</th>
+                <th>Human Score</th>
+                <th>Model Score</th>
+                <th>Error</th>
+            </tr>
+    
+            <tr class="excellent">
+                <td>Excellent</td>
+                <td>"It's a major victory for Maine, and it's a major victory for other states.</td>
+                <td>The Maine program could be a model for other states.</td>
+                <td>0.5600</td>
+                <td>0.5375</td>
+                <td>0.0225</td>
+            </tr>
+        
+            <tr class="excellent">
+                <td>Excellent</td>
+                <td>Black bird sitting on a concrete slab.</td>
+                <td>Black bird standing on concrete.</td>
+                <td>0.8000</td>
+                <td>0.8270</td>
+                <td>0.0270</td>
+            </tr>
+        
+            <tr class="excellent">
+                <td>Excellent</td>
+                <td>The answer to your question is: It depends on how the writer works.</td>
+                <td>At first, I thought this is a bit of a tricky question.</td>
+                <td>0.1600</td>
+                <td>0.2063</td>
+                <td>0.0463</td>
+            </tr>
+        
+            <tr class="good">
+                <td>Good</td>
+                <td>Leaving aside heath care angle, you are working from a flawed premise that waging war doesn't save lives.</td>
+                <td>Healthcare They would probably reject your implied claim that Obama's healthcare law will save lives.</td>
+                <td>0.3200</td>
+                <td>0.3927</td>
+                <td>0.0727</td>
+            </tr>
+        
+            <tr class="good">
+                <td>Good</td>
+                <td>He also said the academy will get its own internal report next week detailing the seriousness of the remaining problem.</td>
+                <td>The academy will get its own internal report next week and it will be made public, Rosa said.</td>
+                <td>0.6666</td>
+                <td>0.7456</td>
+                <td>0.0790</td>
+            </tr>
+        
+            <tr class="good">
+                <td>Good</td>
+                <td>PM in Tehran, asks NAM to take clear stand on Syria</td>
+                <td>Manmohan in Tehran, asks NAM to take a stand on Syria</td>
+                <td>0.7600</td>
+                <td>0.8452</td>
+                <td>0.0852</td>
+            </tr>
+        
+            <tr class="fair">
+                <td>Fair</td>
+                <td>The white ducks are standing on the ground.</td>
+                <td>A woman in a black hat is standing by the subway.</td>
+                <td>0.0000</td>
+                <td>0.1230</td>
+                <td>0.1230</td>
+            </tr>
+        
+            <tr class="fair">
+                <td>Fair</td>
+                <td>Forget for a moment that you ever learned anything about so-called "complex" or "imaginary" numbers.</td>
+                <td>As others have already mentioned, numbers are of course abstractions.</td>
+                <td>0.2400</td>
+                <td>0.4166</td>
+                <td>0.1766</td>
+            </tr>
+        
+            <tr class="fair">
+                <td>Fair</td>
+                <td>A lion cub tries to climb a fence.</td>
+                <td>A lion tries to climb over a wall.</td>
+                <td>0.5500</td>
+                <td>0.7369</td>
+                <td>0.1869</td>
+            </tr>
+        
+            <tr class="poor">
+                <td>Poor</td>
+                <td>A smiling woman holding a small baby.</td>
+                <td>Two smiling women holding a baby.</td>
+                <td>0.6000</td>
+                <td>0.8295</td>
+                <td>0.2295</td>
+            </tr>
+        
+            <tr class="poor">
+                <td>Poor</td>
+                <td>In standard English, I think "don't got" has the same register as "ain't".</td>
+                <td>I'd say the expression I don't got... is generally rare in spoken AmE.</td>
+                <td>0.4400</td>
+                <td>0.7248</td>
+                <td>0.2848</td>
+            </tr>
+        
+            <tr class="poor">
+                <td>Poor</td>
+                <td>Nearly all countries grew quickly in the 1950s and 1960s for pretty much the same reasons.</td>
+                <td>The USSR growth rate during the 50's was not exceptionally high.</td>
+                <td>0.2000</td>
+                <td>0.4957</td>
+                <td>0.2957</td>
+            </tr>
+        
+        </table>
+        
+        <h2>Error Analysis</h2>
+        <p> TODO
+        It struggles more with nuanced similarities that humans can detect.</p>
+        
+        <h3>Performance Summary by Error Quartile</h3>
+        <table>
+            <tr>
+                <th>Category</th>
+                <th>Error Range</th>
+                <th>Count</th>
+                <th>Percentage</th>
+            </tr>
+    
+            <tr>
+                <td>Excellent</td>
+                <td>0.0000 - 0.0494</td>
+                <td>375.0</td>
+                <td>25.00%</td>
+            </tr>
+        
+            <tr>
+                <td>Good</td>
+                <td>0.0497 - 0.1119</td>
+                <td>375.0</td>
+                <td>25.00%</td>
+            </tr>
+        
+            <tr>
+                <td>Fair</td>
+                <td>0.1119 - 0.2036</td>
+                <td>375.0</td>
+                <td>25.00%</td>
+            </tr>
+        
+            <tr>
+                <td>Poor</td>
+                <td>0.2042 - 0.6103</td>
+                <td>375.0</td>
+                <td>25.00%</td>
+            </tr>
+        
+        </table>
+    </body>
+    </html>
+    

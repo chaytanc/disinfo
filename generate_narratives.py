@@ -10,10 +10,8 @@ from langchain_core.prompts import PromptTemplate
 from pydantic import BaseModel, Field
 from langchain_huggingface import HuggingFacePipeline
 from langchain_community.llms.mlx_pipeline import MLXPipeline
-# from langchain_core.exceptions import OutputParserException
-# from langchain.output_parsers import OutputFixingParser
-# from langchain_openai import ChatOpenAI
-# from langchain_ollama import ChatOllama
+
+from preprocess import read_media
 import json
 import re
 from dotenv import load_dotenv
@@ -31,31 +29,9 @@ class Narrative_Generator():
         self.tokenizer = tokenizer
         self.embedding_model = embedding_model
         self.num_narratives = num_narratives
-        
-        # Try loading the file, handle errors gracefully
-        try:
-            self.df = pd.read_csv(file, encoding="utf-8", encoding_errors="ignore")
-        except FileNotFoundError:
-            raise ValueError(f"Error: The file '{file}' was not found.")
-        except pd.errors.EmptyDataError:
-            raise ValueError(f"Error: The file '{file}' is empty or corrupted.")
-        except Exception as e:
-            raise ValueError(f"Error loading file '{file}': {e}")
+        self.df = read_media(file)
         # You could use preprocess_context_window here instead if data is too big...
 
-    def preprocess_context_window(self, file):
-        if file.endswith(".txt"):
-            with open(file, "r") as f:
-                #TODO batch tweets together somehow -- append previously found narratives to the new batch of tweets? Largest batch possible? very small frequent chunks? Enough to get a general sense of thoughts? Very small then aggregate up multiple times?
-                pass
-        elif file.endswith(".csv"):
-            df = pd.read_csv(file, encoding='utf-8', encoding_errors='ignore')
-            # Create n_tweets / smallest_batch_size chunks of tweets / data
-            chunks = self.chunk_it(df, smallest_batch_size)
-            return chunks
-
-    def chunk_it(self, array, k):
-        return np.array_split(array, np.ceil(len(array) / k).astype(int))
 
     def create_prompt(self, tokenizer, user_prompt):
         messages = [
@@ -70,6 +46,7 @@ class Narrative_Generator():
         )
         return prompt
 
+
     def create_format_prompt(self, parser):
         prompt = PromptTemplate(
             template= SYS_PROMPT+"\n{format_instructions}\n{query}\n",
@@ -77,6 +54,7 @@ class Narrative_Generator():
             partial_variables={"format_instructions": parser.get_format_instructions()},
         )
         return prompt
+
 
     def cluster_embedded_tweets(self, tweets):
         embeddings = []
@@ -92,6 +70,7 @@ class Narrative_Generator():
         clustered_tweets = [tweets[clusters.labels_ == label] for label in unique_labels]
         return clustered_tweets
 
+
     # TODO yaml
     # TODO private functions
     def process_chunk(self, chunk, model, tokenizer):
@@ -103,11 +82,14 @@ class Narrative_Generator():
             verbose=True)
         return response, prompt
 
+
     def generate_narratives(self, progress=None):
         # Set up a parser + inject instructions into the prompt template.
         parser = JsonOutputParser(pydantic_object=self.NarrativeSummary)
-        llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer, pipeline_kwargs={"response_format" :
-          {"type": "json_object",}})
+        # TODO response_format is not doing anything
+        llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer, pipeline_kwargs={
+            "temp": 1.3,
+          })
         prompt = self.create_format_prompt(parser)
         chain = prompt | llm | self.parse_json_objects 
 
@@ -131,6 +113,7 @@ class Narrative_Generator():
                 responses.append(resp[0])
  
         return responses, prompt, clustered_tweets
+
 
     def format(self, raw_narratives):
         # Formats to markdown for direct display as a string.
@@ -207,33 +190,6 @@ class Narrative_Generator():
         return parsed_json_list
 
 
-    # def parse_narratives(self, raw_narratives):
-    #     """
-    #     Parses a list of JSON strings into Python dictionaries
-    #     and returns a formatted markdown string + a downloadable JSON file.
-    #     """
-    #     formatted_output = ""
-    #     json_list = []
-
-    #     for i, json_str in enumerate(raw_narratives, 1):
-    #         try:
-    #             narrative_obj = json.loads(json_str)  # Convert JSON string to dict
-    #             json_list.append(narrative_obj)
-
-    #             formatted_output += f"### Narrative Set {i}\n"
-    #             for key, value in narrative_obj.items():
-    #                 formatted_output += f"- **{key.replace('_', ' ').capitalize()}**: {value}\n"
-    #             formatted_output += "\n---\n\n"
-    #         except json.JSONDecodeError:
-    #             formatted_output += f"⚠️ Error parsing narrative {i}: {json_str}\n\n"
-
-    #     # Save JSON for download
-    #     json_file = "generated_narratives.json"
-    #     with open(json_file, "w") as f:
-    #         json.dump(json_list, f, indent=4)
-
-    #     return formatted_output.strip(), json_file
-    
     # Define your desired data structure.
     class NarrativeSummary(BaseModel):
         narrative_1: str = Field(description="Most dominant narrative")

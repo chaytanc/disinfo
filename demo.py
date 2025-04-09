@@ -11,8 +11,8 @@ formatted_narratives = None
 clustered_tweets = None
 
 dataset_options = {
-    "Trump Tweets": "trumptweets1205-127.csv",
-    "Dataset 2": "path/to/dataset2.csv",
+    "Small Trump Tweets": "trumptweets1205-127.csv",
+    "Full Trump Tweets": "full_tweets.csv",
     "Upload Your Own": None
 }
 
@@ -107,6 +107,7 @@ with gr.Blocks() as iface:
             theme="huggingface"
         )
 
+    # TODO trying to add an endpoint for JS to get the clustered tweets from
     # def get_narratives():
     #     if formatted_narratives is not None and clustered_tweets is not None:
     #         return jsonify({
