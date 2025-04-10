@@ -16,11 +16,11 @@ np.set_printoptions(precision=2, suppress=True)
 
 # RQ: Can we show that set X had Y% similarity to Z narrative, which 
 # TODO params file yaml
-file = "trumptweets1205-127.csv"
+file = "tweets/trumptweets1205-127.csv"
 summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
 sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 # file = "syria_articles/wsj_article.txt"
-max_tweets = 1000
+max_tweets = 100000
 num_narratives = 3
 # Do not change the order of this array
 # State Dept. Narratives

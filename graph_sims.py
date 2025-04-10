@@ -49,8 +49,8 @@ def graph_timeseries(x, y):
     # plt.savefig('similarity_over_time.png', dpi=300, bbox_inches='tight')
 
 
-target_narrative = "Russia is an ally"
-file = "trumptweets1205-127.csv"
+target_narrative = "The 2020 election was a hoax"
+file = "tweets/full_tweets.csv"
 summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
 sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 # Load data

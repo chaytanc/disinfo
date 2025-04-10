@@ -408,6 +408,9 @@ def create_html_report():
         and can significantly underestimate similarity due to grammatical errors, as seen in the 1.0 human score worst prediction.
         The exact prevalence of underestimation due to grammatical errors is not clear, but the average error of the model relative to the human score
         is shown in Figure 2.
+        We can also see that the model tends to overestimate the similarity of sentences with differing dates but similar structure.
+        Although this behavior could be desirable in certain contexts, the discrepancy could be due to the STS-B's description of 
+        0.2 similarity ratings as "The two sentences are not equivalent, but are on the same topic."
         </p>
         
         <div class="error-bands">

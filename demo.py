@@ -11,8 +11,8 @@ formatted_narratives = None
 clustered_tweets = None
 
 dataset_options = {
-    "Small Trump Tweets": "trumptweets1205-127.csv",
-    "Full Trump Tweets": "full_tweets.csv",
+    "Small Trump Tweets": "tweets/trumptweets1205-127.csv",
+    "Full Trump Tweets": "tweets/full_tweets.csv",
     "Upload Your Own": None
 }
 
@@ -97,7 +97,7 @@ with gr.Blocks() as iface:
                 # gr.Dropdown([["Russia is an ally", "The 2020 election was stolen"]], value="Narrative", label="Select Narrative"),
                 gr.Dropdown(list(dataset_options.keys()), value="Trump Tweets", label="Select Dataset"),
                 gr.Textbox(label="Narrative", value="e.g. Russia is an ally"),
-                gr.Slider(1, 1000, step=1, value=10, label="Max Tweets to Process"),
+                gr.Slider(1, 100000, step=1, value=10, label="Max Tweets to Process"),
             ],
             outputs=[
                 gr.Markdown(label="Top 10 Similar Tweets"),
