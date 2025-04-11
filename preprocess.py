@@ -54,7 +54,7 @@ def embed_narratives(model, narratives):
 
 
 def process_full_tweets():
-    file = "tweets_01-08-2021.csv"
+    file = "tweets/tweets_01-08-2021.csv"
     df = read_media(file)
     df["Tweet"] = df["text"]
     df["Datetime"] = pd.to_datetime(df["date"], format="%Y-%m-%d %H:%M:%S")
@@ -62,4 +62,4 @@ def process_full_tweets():
 
 # TODO filter specific time range (June 01 2015 to present)
 
-process_full_tweets()
+# process_full_tweets()

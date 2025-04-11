@@ -4,9 +4,9 @@ from sentence_transformers import util
 from preprocess import *
 
 class Results():
-    def __init__(self, model, tweet_file, n_tweets, narratives):
+    def __init__(self, model, tweet_df, n_tweets, narratives):
         self.model = model
-        self.df = read_media(tweet_file)
+        self.df = tweet_df
         if n_tweets > len(self.df):
             n_tweets = len(self.df)
             print("Number of tweets selected is greater than total.\

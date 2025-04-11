@@ -9,6 +9,7 @@ import numpy as np
 from mlx_lm import load 
 from sim_scores import Results
 from generate_narratives import Narrative_Generator
+from preprocess import read_media
 
 # Set the display precision
 pd.options.display.float_format = '{:.2f}'.format
@@ -33,7 +34,8 @@ def run_narrative_generation(file):
 
 print(run_narrative_generation(file))
 # Show results with highest similarity ratings in any narrative dimension
-results = Results(sent_model, file, max_tweets, narratives)
+df = read_media(file)
+results = Results(sent_model, df, max_tweets, narratives)
 results.print_top_k(k=10, narrative_ind=0)
 
 # Compare RT article to WSJ article on same topic wrt generated possible russia narratives or expert narratives

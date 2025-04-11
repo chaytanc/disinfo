@@ -5,6 +5,7 @@ import pandas as pd
 from mlx_lm import load 
 from sim_scores import Results
 from flask import Flask, jsonify
+from preprocess import read_media
 
 # Global variables to store results
 formatted_narratives = None
@@ -59,9 +60,9 @@ def trace_narrative(selected_dataset, narrative, max_tweets):
     # Make sure the file is handled correctly
     # file_path = "trumptweets1205-127.csv"
     file_path = dataset_options.get(selected_dataset, None)
-
+    df = read_media(file_path)
     # Load the Results object and rank the narrative
-    results = Results(embedding_model, file_path, max_tweets, [narrative])
+    results = Results(embedding_model, df, max_tweets, [narrative])
     top_k_results = results.print_top_k(k=10, narrative_ind=0)
 
     # Format the result as a readable string or table
