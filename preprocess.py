@@ -60,6 +60,13 @@ def process_full_tweets():
     df["Datetime"] = pd.to_datetime(df["date"], format="%Y-%m-%d %H:%M:%S")
     df.to_csv("full_tweets.csv")
 
+
+def add_datetime_column(df):
+    # arrange tweets in chronological order based on "Time" column
+    if "Datetime" not in df.columns:
+        df["Datetime"] = pd.to_datetime(df["Date"], format="%Y-%m-%d %H:%M:%S%z")
+    df = df.sort_values(by='Datetime', ascending=True) # no .reset_index(drop=True)
+    return df
 # TODO filter specific time range (June 01 2015 to present)
 
 # process_full_tweets()

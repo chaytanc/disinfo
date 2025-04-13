@@ -18,6 +18,7 @@ np.set_printoptions(precision=2, suppress=True)
 # RQ: Can we show that set X had Y% similarity to Z narrative, which 
 # TODO params file yaml
 file = "tweets/trumptweets1205-127.csv"
+df = read_media(file)
 summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
 sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 # file = "syria_articles/wsj_article.txt"
@@ -26,15 +27,14 @@ num_narratives = 3
 # Do not change the order of this array
 # State Dept. Narratives
 narratives = ["Russia is an Innocent Victim", "The Collapse of Western Civilization is Imminent", "Popular Movements are U.S.-sponsored Color Revolutions",]
-def run_narrative_generation(file):
-    generator = Narrative_Generator(summary_model, tokenizer, sent_model, file, num_narratives)
+def run_narrative_generation(df):
+    generator = Narrative_Generator(summary_model, tokenizer, sent_model, df, num_narratives)
     trump_nars, _, _ = generator.generate_narratives()
     formatted = generator.format(trump_nars)
     return formatted
 
-print(run_narrative_generation(file))
 # Show results with highest similarity ratings in any narrative dimension
-df = read_media(file)
+print(run_narrative_generation(df))
 results = Results(sent_model, df, max_tweets, narratives)
 results.print_top_k(k=10, narrative_ind=0)
 

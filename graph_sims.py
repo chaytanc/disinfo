@@ -1,11 +1,12 @@
 from sim_scores import Results
-# from generate_narratives import Narrative_Generator
+from generate_narratives import Narrative_Generator
 from sentence_transformers import SentenceTransformer, util
 from mlx_lm import load
 from preprocess import *
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from tqdm import tqdm
+import json
 
 # get narrative to graph similarity to
 # get sim_scores for each tweet over time
@@ -21,7 +22,7 @@ def get_sim_timeseries(target_narrative, model, df):
 
 
 # graph time on x axis and similarity on y and return the timeseries + a log of the timestamps at each point
-def create_timeseries_graph(x, y):
+def create_timeseries_graph(x, y, title=None):
     # Create the plot
     plt.figure(figsize=(12, 6))
     plt.plot(x, y, marker='o', linestyle='-', color='#1f77b4')
@@ -34,7 +35,10 @@ def create_timeseries_graph(x, y):
     # Add labels and title
     plt.xlabel('Date')
     plt.ylabel('Similarity Score')
-    plt.title('Narrative Similarity Over Time')
+    if title != None:
+        plt.title(title) 
+    else:
+        plt.title('Narrative Similarity Over Time')
 
     # Add grid for better readability
     plt.grid(True, alpha=0.3)
@@ -50,21 +54,15 @@ def create_timeseries_graph(x, y):
     # plt.savefig('similarity_over_time.png', dpi=300, bbox_inches='tight')
 
 
-def add_datetime_column(df):
-    # arrange tweets in chronological order based on "Time" column
-    if "Datetime" not in df.columns:
-        df["Datetime"] = pd.to_datetime(df["Date"], format="%Y-%m-%d %H:%M:%S%z")
-    df = df.sort_values(by='Datetime', ascending=True) # no .reset_index(drop=True)
-    return df
-
-
-def graph_timeseries(df, target_narrative, sent_model):
+def graph_timeseries(df, target_narrative, sent_model, threshold="0.0"):
     times = df["Datetime"].tolist()
+    timeframe = "{start} to  {end}".format(start=times[0], end=times[-1])
     timeseries = get_sim_timeseries(target_narrative, sent_model, df)
-    create_timeseries_graph(times, timeseries)
+    threshold = str(threshold)
+    create_timeseries_graph(times, timeseries, title="Tracing {target} from {timeframe} above {threshold} similarity".format(target=target_narrative, timeframe=timeframe, threshold=threshold))
 
 
-def trace_over_time(df, timeframe, sim_threshold=0.4):
+def trace_over_time(df, sent_model, target_narrative, timeframe, sim_threshold=0.4):
     """
     Trace the tweets that have a similarity score above a certain threshold
     """
@@ -76,12 +74,13 @@ def trace_over_time(df, timeframe, sim_threshold=0.4):
     filtered_df["Similarity"] = results.similarities[index_list, 0]  # First column
     return filtered_df
 
-
-target_narrative = "The 2020 election was a hoax"
-file = "tweets/full_tweets.csv"
-summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
-sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-df = read_media(file)
-df = add_datetime_column(df)
-filtered_df = trace_over_time(df, ["2020-11-01", "2020-12-01"], sim_threshold=0.4)
-graph_timeseries(filtered_df, target_narrative, sent_model)
+if __name__ == "__main__":
+    target_narrative = "The 2020 election was a hoax"
+    file = "tweets/full_tweets.csv"
+    summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
+    sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+    df = read_media(file)
+    df = add_datetime_column(df)
+    threshold = 0.4
+    filtered_df = trace_over_time(df, sent_model, target_narrative, ["2020-11-01", "2020-12-01"], sim_threshold=threshold)
+    graph_timeseries(filtered_df, target_narrative, sent_model, threshold=threshold)

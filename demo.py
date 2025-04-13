@@ -33,7 +33,8 @@ def run_narrative_generation(selected_dataset, uploaded_file, num_narratives, pr
             return "Please upload a file.", None
         file_path = uploaded_file.name
 
-    generator = Narrative_Generator(summary_model, tokenizer, embedding_model, file_path, num_narratives)
+    df = read_media(file_path)
+    generator = Narrative_Generator(summary_model, tokenizer, embedding_model, df, num_narratives)
     try:
         json_narratives, _, clustered_tweets = generator.generate_narratives(progress=progress)
         formatted_narratives = generator.get_html_formatted_outputs(json_narratives)

@@ -24,12 +24,12 @@ SYS_PROMPT = "You should find the top two dominant narratives in the following b
 smallest_batch_size = 10
 
 class Narrative_Generator():
-    def __init__(self, summary_model, tokenizer, embedding_model, file, num_narratives):
+    def __init__(self, summary_model, tokenizer, embedding_model, data, num_narratives):
         self.summary_model = summary_model
         self.tokenizer = tokenizer
         self.embedding_model = embedding_model
         self.num_narratives = num_narratives
-        self.df = read_media(file)
+        self.df = data
         # You could use preprocess_context_window here instead if data is too big...
 
 
@@ -86,9 +86,8 @@ class Narrative_Generator():
     def generate_narratives(self, progress=None):
         # Set up a parser + inject instructions into the prompt template.
         parser = JsonOutputParser(pydantic_object=self.NarrativeSummary)
-        # TODO response_format is not doing anything
         llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer, pipeline_kwargs={
-            "temp": 1.3,
+            "temp": 0.9,
           })
         prompt = self.create_format_prompt(parser)
         chain = prompt | llm | self.parse_json_objects 
@@ -96,7 +95,7 @@ class Narrative_Generator():
         # What happens when we have way more than 300 tweets? Can we still cluster 50,000 or do we chunk it by time and regen narratives?
         clustered_tweets = self.cluster_embedded_tweets(self.df["Tweet"])
         responses = []
-        if progress != None:
+        if progress:
             for chunk in progress.tqdm(clustered_tweets):
                 # resp, prompt = process_chunk(chunk, self.summary_model, self.tokenizer)
                 resp = chain.invoke({"query": chunk})
@@ -171,6 +170,7 @@ class Narrative_Generator():
         Identifies JSON objects between curly braces and attempts to parse them.
         Returns a list of successfully parsed JSON objects.
         Raises an error if parsing any JSON object fails, but continues processing others.
+        Returns a list of one JSON object with keys 'narrative_1' and 'narrative_2'.
         """
         # Regex to find JSON objects between curly braces {}
         json_objects = re.findall(r'\{.*?\}', text, re.DOTALL)
