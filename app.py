@@ -5,20 +5,36 @@ from sentence_transformers import SentenceTransformer
 from mlx_lm import load
 from preprocess import read_media, add_datetime_column
 from graph_sims import trace_over_time, graph_timeseries
+import os
 
-# target_narrative = "The 2020 election was a hoax"
-file = "tweets/full_tweets.csv"
+tweets_dir = 'tweets'
+# file = "tweets/full_tweets.csv"
 summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
 sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-df = read_media(file)
-df = add_datetime_column(df)
 
 
 app = Flask(__name__)
+
+@app.route('/post-datasets', methods=['POST'])
+def api_post_datasets():
+    """ Assumes every csv file in tweets_dir is compatible w analysis 
+    (has Tweet, Datetime cols). Returns these in a jsonified list."""
+    files = [os.path.basename(f) for f in os.listdir(tweets_dir) 
+             if os.path.isfile(os.path.join(tweets_dir, f)) and f.endswith('.csv')]
+    result = {
+        'files': files 
+    }
+    
+    return jsonify(result)
+
 @app.route('/trace-over-time', methods=['POST'])
 def api_trace_over_time():
     # Get parameters from request
     data = request.json
+    file = os.path.join(tweets_dir, data.get('file1'))
+    df = read_media(file)
+    df = add_datetime_column(df)
+    
     start_date = data.get('startDate')
     end_date = data.get('endDate')
     target_narrative = data.get('targetNarrative')
@@ -46,21 +62,9 @@ def api_trace_over_time():
 
 @app.route('/generate-narratives', methods=['POST'])
 def api_generate_narratives():
-    # Get data from the request
     data = request.json
     
-    # Whether to use pre-filtered data or the raw data
-    if 'useFilteredData' in data and data['useFilteredData'] and 'filteredData' in data:
-        # Use the filtered data provided in the request
-        filtered_df = pd.DataFrame(data['filteredData'])
-    else:
-        # Apply filtering based on parameters
-        start_date = data.get('startDate')
-        end_date = data.get('endDate')
-        target_narrative = data.get('targetNarrative')
-        threshold = data.get('threshold', 0.5)
-        filtered_df = trace_over_time(df, sent_model, target_narrative, [start_date, end_date], sim_threshold=threshold)
-    
+    filtered_df = pd.DataFrame(data['filteredData'])
     # Get number of narratives to generate
     num_narratives = data.get('numNarratives', 3)
     
@@ -68,16 +72,8 @@ def api_generate_narratives():
     narrative_generator = Narrative_Generator(summary_model, tokenizer, sent_model, filtered_df, num_narratives)
     narratives_obj, *_ = narrative_generator.generate_narratives()
     
-    # # Convert object to array format for React
-    # for 
-    # narratives_array = [
-    #     {"key": key, "text": value} for key, value in narratives_obj.items()
-    # ]
-    
     # Return the results as an array
     return jsonify({'narratives': narratives_obj})
 
 if __name__ == '__main__':
-    # Load your DataFrame here
-    # df = pd.read_csv('your_tweets.csv')
     app.run(debug=True)

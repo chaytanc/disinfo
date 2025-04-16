@@ -15,22 +15,26 @@ export default function TweetAnalysisDashboard() {
   const [targetNarrative, setTargetNarrative] = useState('COVID-19 vaccine safety');
   const [threshold, setThreshold] = useState(0.5);
   const [numNarratives, setNumNarratives] = useState(3);
+  const [numDatasets, setNumDatasets] = useState(1);
+  const [datasets, setDatasets] = useState(["full_tweets.csv"]);
+  // const [comparisonDataset, setComparisonDataset] = useState("");
+  // const [showComparison, setShowComparison] = useState(false);
+  const [selectedDatasets, setSelectedDatasets] = useState(["full_tweets.csv"]);
   
-  // Function to fetch filtered data
-  const fetchFilteredData = async () => {
-    setIsLoading(true);
+  // Add useEffect to fetch datasets when component mounts
+  useEffect(() => {
+    fetchDatasets();
+  }, []);
+  
+  // Fix the fetchDatasets function
+  const fetchDatasets = async () => {
     try {
-      const response = await fetch('/trace-over-time', {
+      const response = await fetch('/post-datasets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          startDate,
-          endDate,
-          targetNarrative,
-          threshold
-        }),
+        body: JSON.stringify({})
       });
       
       if (!response.ok) {
@@ -38,14 +42,54 @@ export default function TweetAnalysisDashboard() {
       }
       
       const result = await response.json();
-      setData(result.filteredData);
-      
+      setDatasets(result.files); // Make sure this matches the key in your Flask response
+    } catch (error) {
+      console.error('Error fetching datasets:', error);
+    }
+  };
+  
+  const fetchFilteredData = async () => {
+    setIsLoading(true);
+    try {
+      // Wait for all selected datasets to be processed
+      // then tag them with which dataset before returning
+      const results = await Promise.all(
+        selectedDatasets.map(async (dataset) => {
+          const response = await fetch('/trace-over-time', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              startDate,
+              endDate,
+              targetNarrative,
+              threshold,
+              file1: dataset
+            }),
+          });
+  
+          if (!response.ok) {
+            throw new Error(`Failed to fetch data for ${dataset}`);
+          }
+  
+          const result = await response.json();
+          return result.filteredData.map(d => ({
+            ...d,
+            dataset, // tag each point with its dataset name
+          }));
+        })
+      );
+  
+      const combinedData = results.flat(); // combine results into a single array
+      setData(combinedData);
     } catch (error) {
       console.error('Error fetching filtered data:', error);
     } finally {
       setIsLoading(false);
     }
   };
+  
   
   // Function to generate narratives
   const generateNarratives = async () => {
@@ -57,7 +101,6 @@ export default function TweetAnalysisDashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          useFilteredData: true,
           filteredData: data,
           numNarratives
         }),
@@ -79,6 +122,17 @@ export default function TweetAnalysisDashboard() {
   
   const handleDataPointClick = (data) => {
     setSelectedTweet(data);
+  };
+
+  const addDataset = () => {
+    // setNumDatasets(numDatasets + 1);
+    setSelectedDatasets(prev => [...prev, 'full_tweets.csv']);
+  };
+
+  const updateSelectedDatasets = (e, index) => {
+      const updated = [...selectedDatasets];
+      updated[index] = e.target.value;
+      setSelectedDatasets(updated);
   };
   
   const CustomTooltip = ({ active, payload }) => {
@@ -103,7 +157,29 @@ export default function TweetAnalysisDashboard() {
       {/* Filter Controls */}
       <div className="bg-white p-4 rounded shadow mb-6">
         <h3 className="font-bold mb-4">Analysis Parameters</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* // TODO fix css class */}
+          <button onClick={addDataset}>
+            Add Dataset
+          </button>
+          {selectedDatasets.map((selectedDataset, index) => (
+            <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Dataset</label>
+            <select
+              value={selectedDataset}
+              onChange={(e) => updateSelectedDatasets(e, index)}
+              className="w-full p-2 border rounded"
+            >
+              {datasets.map((dataset, index) => (
+                <option key={index} value={dataset}>
+                  {dataset}
+                </option>
+              ))}
+            </select>
+          </div>
+          ))
+          }
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Target Narrative</label>
             <input

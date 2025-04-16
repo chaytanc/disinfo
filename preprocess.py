@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import os
 
 
 def read_media(file):
@@ -53,12 +54,14 @@ def embed_narratives(model, narratives):
     return nar_embeds
 
 
-def process_full_tweets():
-    file = "tweets/tweets_01-08-2021.csv"
+def process_full_tweets(file):
+    """ Processes csv files from Junkipedia Twitter data. """
     df = read_media(file)
-    df["Tweet"] = df["text"]
-    df["Datetime"] = pd.to_datetime(df["date"], format="%Y-%m-%d %H:%M:%S")
-    df.to_csv("full_tweets.csv")
+    df["Tweet"] = df["post_body_text"]
+    # df["Datetime"] = pd.to_datetime(df["date"], format="%Y-%m-%d %H:%M:%S")
+    df["Datetime"] = pd.to_datetime(df["published_at"], format="%Y-%m-%dT%H:%M:%S.%fZ")
+    df["id"] = df["PostId"]
+    df.to_csv("tweets/full_" + os.path.basename(file) + ".csv")
 
 
 def add_datetime_column(df):
@@ -67,6 +70,6 @@ def add_datetime_column(df):
         df["Datetime"] = pd.to_datetime(df["Date"], format="%Y-%m-%d %H:%M:%S%z")
     df = df.sort_values(by='Datetime', ascending=True) # no .reset_index(drop=True)
     return df
-# TODO filter specific time range (June 01 2015 to present)
+# TODO final analysis on specific time range (June 01 2015 to present)
 
-# process_full_tweets()
+process_full_tweets("tweets/tweets_BenShapiro.csv")
