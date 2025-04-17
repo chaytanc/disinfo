@@ -59,9 +59,9 @@ def process_full_tweets(file):
     df = read_media(file)
     df["Tweet"] = df["post_body_text"]
     # df["Datetime"] = pd.to_datetime(df["date"], format="%Y-%m-%d %H:%M:%S")
-    df["Datetime"] = pd.to_datetime(df["published_at"], format="%Y-%m-%dT%H:%M:%S.%fZ")
+    df["Datetime"] = pd.to_datetime(df["published_at"], format="%Y-%m-%dT%H:%M:%S.%fZ").dt.floor('S')
     df["id"] = df["PostId"]
-    df.to_csv("tweets/full_" + os.path.basename(file) + ".csv")
+    df.to_csv("tweets/full_" + os.path.basename(file))
 
 
 def add_datetime_column(df):
@@ -72,4 +72,4 @@ def add_datetime_column(df):
     return df
 # TODO final analysis on specific time range (June 01 2015 to present)
 
-process_full_tweets("tweets/tweets_BenShapiro.csv")
+# process_full_tweets("tweets/tweets_JoeRogan.csv")

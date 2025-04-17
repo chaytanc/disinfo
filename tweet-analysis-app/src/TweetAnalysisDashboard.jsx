@@ -12,21 +12,25 @@ export default function TweetAnalysisDashboard() {
   // Filter parameters
   const [startDate, setStartDate] = useState('2020-11-01');
   const [endDate, setEndDate] = useState('2020-12-01');
-  const [targetNarrative, setTargetNarrative] = useState('COVID-19 vaccine safety');
+  const [targetNarrative, setTargetNarrative] = useState('The 2020 election was a hoax');
   const [threshold, setThreshold] = useState(0.5);
   const [numNarratives, setNumNarratives] = useState(3);
-  const [numDatasets, setNumDatasets] = useState(1);
+  const [groupedData, setGroupedData] = useState({});
   const [datasets, setDatasets] = useState(["full_tweets.csv"]);
-  // const [comparisonDataset, setComparisonDataset] = useState("");
-  // const [showComparison, setShowComparison] = useState(false);
   const [selectedDatasets, setSelectedDatasets] = useState(["full_tweets.csv"]);
+  
+  // Debug useEffect to track state changes
+  useEffect(() => {
+    console.log("Data changed:", data.length);
+    console.log("GroupedData:", groupedData);
+  }, [data, groupedData]);
   
   // Add useEffect to fetch datasets when component mounts
   useEffect(() => {
     fetchDatasets();
   }, []);
   
-  // Fix the fetchDatasets function
+  // Fetch datasets function
   const fetchDatasets = async () => {
     try {
       const response = await fetch('/post-datasets', {
@@ -42,6 +46,7 @@ export default function TweetAnalysisDashboard() {
       }
       
       const result = await response.json();
+      console.log("Fetched datasets:", result.files);
       setDatasets(result.files); // Make sure this matches the key in your Flask response
     } catch (error) {
       console.error('Error fetching datasets:', error);
@@ -52,9 +57,9 @@ export default function TweetAnalysisDashboard() {
     setIsLoading(true);
     try {
       // Wait for all selected datasets to be processed
-      // then tag them with which dataset before returning
       const results = await Promise.all(
-        selectedDatasets.map(async (dataset) => {
+        selectedDatasets.map(async (datasetName) => {
+          console.log(`Fetching data for dataset: ${datasetName}`);
           const response = await fetch('/trace-over-time', {
             method: 'POST',
             headers: {
@@ -65,31 +70,46 @@ export default function TweetAnalysisDashboard() {
               endDate,
               targetNarrative,
               threshold,
-              file1: dataset
+              file1: datasetName
             }),
           });
   
           if (!response.ok) {
-            throw new Error(`Failed to fetch data for ${dataset}`);
+            throw new Error(`Failed to fetch data for ${datasetName}`);
           }
   
           const result = await response.json();
+          console.log(`Received ${result.filteredData.length} items for ${datasetName}`);
+          
+          // Make sure each data point has a valid Date object for Datetime
           return result.filteredData.map(d => ({
             ...d,
-            dataset, // tag each point with its dataset name
+            // Datetime: d.Datetime ? new Date(d.Datetime).getTime() : new Date().getTime(),
+            datasetName, // tag each point with its dataset name
           }));
         })
       );
   
       const combinedData = results.flat(); // combine results into a single array
+      console.log("Combined data points:", combinedData.length);
+      
+      // Create new grouped data object based on the combined data
+      const grouped = {};
+      selectedDatasets.forEach(datasetName => {
+        grouped[datasetName] = combinedData.filter(d => d.datasetName === datasetName);
+        console.log(`Grouped ${datasetName}:`, grouped[datasetName].length);
+      });
+      
+      // Set state AFTER processing
       setData(combinedData);
+      setGroupedData(grouped);
+      
     } catch (error) {
       console.error('Error fetching filtered data:', error);
     } finally {
       setIsLoading(false);
     }
   };
-  
   
   // Function to generate narratives
   const generateNarratives = async () => {
@@ -121,18 +141,18 @@ export default function TweetAnalysisDashboard() {
   };
   
   const handleDataPointClick = (data) => {
+    console.log("Selected tweet:", data);
     setSelectedTweet(data);
   };
 
   const addDataset = () => {
-    // setNumDatasets(numDatasets + 1);
-    setSelectedDatasets(prev => [...prev, 'full_tweets.csv']);
+    setSelectedDatasets(prev => [...prev, datasets[0] || 'full_tweets.csv']);
   };
 
   const updateSelectedDatasets = (e, index) => {
-      const updated = [...selectedDatasets];
-      updated[index] = e.target.value;
-      setSelectedDatasets(updated);
+    const updated = [...selectedDatasets];
+    updated[index] = e.target.value;
+    setSelectedDatasets(updated);
   };
   
   const CustomTooltip = ({ active, payload }) => {
@@ -158,27 +178,28 @@ export default function TweetAnalysisDashboard() {
       <div className="bg-white p-4 rounded shadow mb-6">
         <h3 className="font-bold mb-4">Analysis Parameters</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* // TODO fix css class */}
-          <button onClick={addDataset}>
+          <button 
+            onClick={addDataset}
+            className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+          >
             Add Dataset
           </button>
           {selectedDatasets.map((selectedDataset, index) => (
-            <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Dataset</label>
-            <select
-              value={selectedDataset}
-              onChange={(e) => updateSelectedDatasets(e, index)}
-              className="w-full p-2 border rounded"
-            >
-              {datasets.map((dataset, index) => (
-                <option key={index} value={dataset}>
-                  {dataset}
-                </option>
-              ))}
-            </select>
-          </div>
-          ))
-          }
+            <div key={index}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Dataset</label>
+              <select
+                value={selectedDataset}
+                onChange={(e) => updateSelectedDatasets(e, index)}
+                className="w-full p-2 border rounded"
+              >
+                {datasets.map((dataset, datasetIndex) => (
+                  <option key={datasetIndex} value={dataset}>
+                    {dataset}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Target Narrative</label>
@@ -235,30 +256,45 @@ export default function TweetAnalysisDashboard() {
       {data.length > 0 ? (
         <div className="mb-6">
           <h3 className="font-bold mb-4">Tweet Similarity Timeline</h3>
+          <div className="text-sm text-gray-500 mb-2">
+            Total data points: {data.length}
+          </div>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart
-              data={data}
+              data={data} // Provide all data as a baseline
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
               onClick={(e) => e && e.activePayload && handleDataPointClick(e.activePayload[0].payload)}
             >
+              <CartesianGrid strokeDasharray="3 3" />
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="Datetime" 
                 tickFormatter={(datetime) => new Date(datetime).toLocaleDateString()}
                 label={{ value: 'Date', position: 'insideBottom', offset: -5 }}
               />
-              <YAxis 
-                domain={[0, 1]} 
+              <YAxis
+                domain={[0, 1]}
                 label={{ value: 'Similarity Score', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="Similarity" 
-                stroke="#8884d8" 
-                activeDot={{ r: 8, onClick: (e, payload) => handleDataPointClick(payload) }} 
-              />
+
+              {selectedDatasets.map((datasetName, i) => {
+                const datasetPoints = groupedData[datasetName] || [];
+                console.log(`Rendering line for ${datasetName}: ${datasetPoints.length} points`);
+                return (
+                  <Line
+                    key={datasetName}
+                    type="monotone"
+                    data={datasetPoints}
+                    dataKey="Similarity"
+                    name={datasetName}
+                    stroke={['#8884d8', '#82ca9d', '#ff7300', '#ff69b4'][i % 4]}
+                    dot={{ r: 2 }}
+                    activeDot={{ r: 6 }}
+                  />
+                );
+              })}
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -308,7 +344,7 @@ export default function TweetAnalysisDashboard() {
           <ul className="list-disc pl-5">
             {narratives.map((narrative, index) => (
               <li key={index} className="mb-2">
-                {narrative.narrative_1} <br></br>
+                {narrative.narrative_1} <br />
                 {narrative.narrative_2}
               </li>
             ))}

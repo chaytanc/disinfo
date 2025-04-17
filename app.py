@@ -33,7 +33,6 @@ def api_trace_over_time():
     data = request.json
     file = os.path.join(tweets_dir, data.get('file1'))
     df = read_media(file)
-    df = add_datetime_column(df)
     
     start_date = data.get('startDate')
     end_date = data.get('endDate')
