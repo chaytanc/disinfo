@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+const API_BASE_URL = 'http://localhost:5000';
+
 export default function TweetAnalysisDashboard() {
   // State variables
   const [data, setData] = useState([]);
@@ -33,7 +35,9 @@ export default function TweetAnalysisDashboard() {
   // Fetch datasets function
   const fetchDatasets = async () => {
     try {
-      const response = await fetch('/post-datasets', {
+      debugger;
+      const response = await fetch(`${API_BASE_URL}/post-datasets`, 
+      {        
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -47,7 +51,7 @@ export default function TweetAnalysisDashboard() {
       
       const result = await response.json();
       console.log("Fetched datasets:", result.files);
-      setDatasets(result.files); // Make sure this matches the key in your Flask response
+      setDatasets(result.files);
     } catch (error) {
       console.error('Error fetching datasets:', error);
     }
@@ -60,7 +64,7 @@ export default function TweetAnalysisDashboard() {
       const results = await Promise.all(
         selectedDatasets.map(async (datasetName) => {
           console.log(`Fetching data for dataset: ${datasetName}`);
-          const response = await fetch('/trace-over-time', {
+          const response = await fetch(`${API_BASE_URL}/trace-over-time`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -77,6 +81,9 @@ export default function TweetAnalysisDashboard() {
           if (!response.ok) {
             throw new Error(`Failed to fetch data for ${datasetName}`);
           }
+          // // Log the raw text response to see what's coming back
+          // const rawText = await response.text();
+          // console.log('Raw response:', rawText);
   
           const result = await response.json();
           console.log(`Received ${result.filteredData.length} items for ${datasetName}`);
@@ -105,6 +112,7 @@ export default function TweetAnalysisDashboard() {
       setGroupedData(grouped);
       
     } catch (error) {
+      debugger;
       console.error('Error fetching filtered data:', error);
     } finally {
       setIsLoading(false);
@@ -115,7 +123,7 @@ export default function TweetAnalysisDashboard() {
   const generateNarratives = async () => {
     setIsProcessing(true);
     try {
-      const response = await fetch('/generate-narratives', {
+      const response = await fetch(`${API_BASE_URL}/generate-narratives`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -173,7 +181,6 @@ export default function TweetAnalysisDashboard() {
   return (
     <div className="bg-gray-50 p-6 rounded-lg shadow mx-auto max-w-6xl">
       <h2 className="text-2xl font-bold mb-6">Tweet Narrative Analysis Dashboard</h2>
-      
       {/* Filter Controls */}
       <div className="bg-white p-4 rounded shadow mb-6">
         <h3 className="font-bold mb-4">Analysis Parameters</h3>
