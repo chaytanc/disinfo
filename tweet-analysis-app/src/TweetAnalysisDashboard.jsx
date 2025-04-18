@@ -35,7 +35,6 @@ export default function TweetAnalysisDashboard() {
   // Fetch datasets function
   const fetchDatasets = async () => {
     try {
-      debugger;
       const response = await fetch(`${API_BASE_URL}/post-datasets`, 
       {        
         method: 'POST',
@@ -266,16 +265,22 @@ export default function TweetAnalysisDashboard() {
             Total data points: {data.length}
           </div>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart
-              data={data} // Provide all data as a baseline
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              onClick={(e) => e && e.activePayload && handleDataPointClick(e.activePayload[0].payload)}
-            >
+          <LineChart
+            data={data.map(item => ({
+              ...item,
+              Datetime: new Date(item.Datetime).getTime() // Convert to timestamp for proper scaling
+            }))}
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            onClick={(e) => e && e.activePayload && handleDataPointClick(e.activePayload[0].payload)}
+          >
               <CartesianGrid strokeDasharray="3 3" />
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="Datetime" 
-                tickFormatter={(datetime) => new Date(datetime).toLocaleDateString()}
+                scale="time"
+                type="number"
+                domain={['dataMin', 'dataMax']}
+                tickFormatter={(unixTime) => new Date(unixTime).toLocaleDateString()}
                 label={{ value: 'Date', position: 'insideBottom', offset: -5 }}
               />
               <YAxis
@@ -286,8 +291,11 @@ export default function TweetAnalysisDashboard() {
               <Legend />
 
               {selectedDatasets.map((datasetName, i) => {
-                const datasetPoints = groupedData[datasetName] || [];
-                console.log(`Rendering line for ${datasetName}: ${datasetPoints.length} points`);
+                const datasetPoints = (groupedData[datasetName] || []).map(item => ({
+                  ...item,
+                  Datetime: new Date(item.Datetime).getTime()
+                }));
+                
                 return (
                   <Line
                     key={datasetName}
