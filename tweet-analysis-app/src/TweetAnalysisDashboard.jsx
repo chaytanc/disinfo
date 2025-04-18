@@ -81,38 +81,37 @@ export default function TweetAnalysisDashboard() {
           if (!response.ok) {
             throw new Error(`Failed to fetch data for ${datasetName}`);
           }
-          // // Log the raw text response to see what's coming back
-          // const rawText = await response.text();
-          // console.log('Raw response:', rawText);
   
           const result = await response.json();
           console.log(`Received ${result.filteredData.length} items for ${datasetName}`);
           
-          // Make sure each data point has a valid Date object for Datetime
+          // Just add the dataset name, keep Datetime as is
           return result.filteredData.map(d => ({
             ...d,
-            // Datetime: d.Datetime ? new Date(d.Datetime).getTime() : new Date().getTime(),
-            datasetName, // tag each point with its dataset name
+            datasetName
           }));
         })
       );
   
-      const combinedData = results.flat(); // combine results into a single array
-      console.log("Combined data points:", combinedData.length);
+      // Flatten the results and then sort chronologically by Datetime
+      let combinedData = results.flat();
       
-      // Create new grouped data object based on the combined data
+      // Simple sort by Datetime
+      combinedData.sort((a, b) => a.Datetime - b.Datetime);
+      
+      console.log("Combined and sorted data points:", combinedData.length);
+      
+      // Create grouped data object based on the sorted combined data
       const grouped = {};
       selectedDatasets.forEach(datasetName => {
-        grouped[datasetName] = combinedData.filter(d => d.datasetName === datasetName);
+        grouped[datasetName] = (combinedData.filter(d => d.datasetName === datasetName)).sort((a, b) => new Date(a.Datetime) - new Date(b.Datetime));
         console.log(`Grouped ${datasetName}:`, grouped[datasetName].length);
       });
-      
       // Set state AFTER processing
       setData(combinedData);
       setGroupedData(grouped);
       
     } catch (error) {
-      debugger;
       console.error('Error fetching filtered data:', error);
     } finally {
       setIsLoading(false);
