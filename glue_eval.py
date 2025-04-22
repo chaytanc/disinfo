@@ -450,8 +450,6 @@ def create_html_report():
             <tr>
                 <th>Category</th>
                 <th>Error Range</th>
-                <th>Count</th>
-                <th>Percentage</th>
             </tr>
     """
     

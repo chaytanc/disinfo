@@ -1,25 +1,20 @@
-import pandas as pd
 import numpy as np
 from mlx_lm import generate
 from sklearn.cluster import KMeans
-# from sentence_transformers import SentenceTransformer, util
-from transformers import pipeline
 
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from pydantic import BaseModel, Field
-from langchain_huggingface import HuggingFacePipeline
 from langchain_community.llms.mlx_pipeline import MLXPipeline
 
-from preprocess import read_media
 import json
 import re
 from dotenv import load_dotenv
 
+# TODO do I still need this?
 load_dotenv()
 # Simple prompt
 SYS_PROMPT = "You should find the top two dominant narratives in the following batch of tweets. Do not cite which tweets correspond to the narratives, just supply the narrative summaries. You must always return valid JSON fenced by a markdown code block. Do not return any additional text. "
-# OUTPUT_PARSE_PROMPT = "Structure your response as a JSON object with {'narrative 1': value, 'narrative 2', value}"
 
 smallest_batch_size = 10
 
@@ -59,10 +54,6 @@ class Narrative_Generator():
     def cluster_embedded_tweets(self, tweets):
         embeddings = []
         for tweet in tweets:
-            # TODO this is NOT clustering the embeddings, it's clustering the fucking input ids
-            # Why does it seem to work then? TODO visualize the spread of these clusters and the tweets within the clusters
-            # Lowkey this can be done later -- having bugs like this that affect the outcome but not the look of the prototype can be addressed later
-            # Wait lowkey this might work bc it's the info retrieval semantic sim model, have to check docs on the output of encode
             embeddings.append(self.embedding_model.encode(tweet, convert_to_numpy=True))
         clusters = KMeans(n_clusters=self.num_narratives).fit(embeddings)
         unique_labels = np.unique(clusters.labels_)
@@ -97,7 +88,6 @@ class Narrative_Generator():
         responses = []
         if progress:
             for chunk in progress.tqdm(clustered_tweets):
-                # resp, prompt = process_chunk(chunk, self.summary_model, self.tokenizer)
                 resp = chain.invoke({"query": chunk})
                 # TODO remove print
                 print(resp)
@@ -194,12 +184,3 @@ class Narrative_Generator():
     class NarrativeSummary(BaseModel):
         narrative_1: str = Field(description="Most dominant narrative")
         narrative_2: str = Field(description="Second dominant narrative")
-
-# For tweet in timeline of tweets, sim score to each of X number of generated narratives, and add to list
-    # Plot each list of similarities to narrative over time
-
-#TODO LLM Validation: 
-    # Have people randomly sample tweets from the batches and agree or disagree with the top 2 narratives presented (and write in alternative if desired)
-#TODO Similarity validation
-    # Given valid narratives, have people code tweets as belonging to or not belonging to those
-# TODO filter out retweets / response tweets? Adjust prompt to account for this? For example, respondign to fake news CNN tweets criticizing his policies are confusing the LLM

@@ -91,6 +91,9 @@
         and can significantly underestimate similarity due to grammatical errors, as seen in the 1.0 human score worst prediction.
         The exact prevalence of underestimation due to grammatical errors is not clear, but the average error of the model relative to the human score
         is shown in Figure 2.
+        We can also see that the model tends to overestimate the similarity of sentences with differing dates but similar structure.
+        Although this behavior could be desirable in certain contexts, the discrepancy could be due to the STS-B's description of 
+        0.2 similarity ratings as "The two sentences are not equivalent, but are on the same topic."
         </p>
         
         <div class="error-bands">
@@ -315,110 +318,110 @@
     
             <tr class="excellent">
                 <td>Excellent</td>
-                <td>Once you open it up to toxins, the answer is clearly no, boiling is not enough.</td>
-                <td>Boiling eliminates only a certain class of contaminants that can make you ill.</td>
+                <td>The dogs are chasing a cat.</td>
+                <td>The dogs are chasing a black cat.</td>
+                <td>0.8800</td>
+                <td>0.8696</td>
+                <td>0.0104</td>
+            </tr>
+        
+            <tr class="excellent">
+                <td>Excellent</td>
+                <td>The man without a shirt is jumping.</td>
+                <td>The man jumping is not wearing a shirt.</td>
+                <td>0.9200</td>
+                <td>0.8896</td>
+                <td>0.0304</td>
+            </tr>
+        
+            <tr class="excellent">
+                <td>Excellent</td>
+                <td>But JT was careful to clarify that it was "not certain about the outcome of the discussion at this moment".</td>
+                <td>"However, we are not certain about the outcome of the discussion at this moment."</td>
                 <td>0.6400</td>
-                <td>0.6398</td>
-                <td>0.0002</td>
-            </tr>
-        
-            <tr class="excellent">
-                <td>Excellent</td>
-                <td>Nylon dries fast, is resistant to ripping and tearing, and fairly breathable.</td>
-                <td>Nylon, among other synthetics, is an ideal material for clothing for most outdoor pursuits for several reasons.</td>
-                <td>0.5600</td>
-                <td>0.5841</td>
-                <td>0.0241</td>
-            </tr>
-        
-            <tr class="excellent">
-                <td>Excellent</td>
-                <td>Yes, your sentence will be clearer if you write the actual word instead of the slash.</td>
-                <td>Most style guides recommend against using the slash in phrases like “X and/or Y”, as well as  “this is hard/impossible to do”.</td>
-                <td>0.6800</td>
-                <td>0.6369</td>
-                <td>0.0431</td>
+                <td>0.6834</td>
+                <td>0.0434</td>
             </tr>
         
             <tr class="good">
                 <td>Good</td>
-                <td>A woman is sitting up asleep with her head resting on her hand.</td>
-                <td>A man who is resting his head on his hand.</td>
-                <td>0.4400</td>
-                <td>0.4998</td>
-                <td>0.0598</td>
+                <td>A person is peeling shrimp.</td>
+                <td>A person is preparing shrimp.</td>
+                <td>0.7200</td>
+                <td>0.7722</td>
+                <td>0.0522</td>
             </tr>
         
             <tr class="good">
                 <td>Good</td>
-                <td>Two kids are playing a game of Foosball.</td>
-                <td>The kids are playing a game with each other.</td>
-                <td>0.6800</td>
-                <td>0.7735</td>
-                <td>0.0935</td>
-            </tr>
-        
-            <tr class="good">
-                <td>Good</td>
-                <td>Mahmud controlled access to Saddam for everyone but immediate family members, Pentagon officials said.</td>
-                <td>Mahmud controlled access to Saddam and was frequently at his side.</td>
-                <td>0.7000</td>
-                <td>0.8007</td>
-                <td>0.1007</td>
-            </tr>
-        
-            <tr class="fair">
-                <td>Fair</td>
-                <td>Global progress seen in ending death penalty</td>
-                <td>Iran diplomat: progress being made in expert-level talks</td>
+                <td>As mentioned in the other comments, ANOVA is problematic when mixing types of predictor variables.</td>
+                <td>I like to think of multitasking as rapid task switching.</td>
                 <td>0.0000</td>
-                <td>0.1206</td>
-                <td>0.1206</td>
+                <td>0.1081</td>
+                <td>0.1081</td>
+            </tr>
+        
+            <tr class="good">
+                <td>Good</td>
+                <td>Sirius carries National Public Radio, although it doesn't include popular shows such as "All Things Considered" and "Morning Edition."</td>
+                <td>Sirius recently began carrying National Public Radio, a deal pooh-poohed by XM because it doesn't include popular shows like All Things Considered and Morning Edition.</td>
+                <td>0.6800</td>
+                <td>0.7892</td>
+                <td>0.1092</td>
             </tr>
         
             <tr class="fair">
                 <td>Fair</td>
-                <td>As I wrote above, it's hard to rate this wall.</td>
-                <td>Unlike others, I think the route is pretty well described.</td>
+                <td>The academic year does start around September in the USA and I think most European countries.</td>
+                <td>I would not accelerate things, to avoid getting worse grades that you want.</td>
                 <td>0.0400</td>
-                <td>0.1970</td>
-                <td>0.1570</td>
+                <td>0.1528</td>
+                <td>0.1128</td>
             </tr>
         
             <tr class="fair">
                 <td>Fair</td>
-                <td>I started watching the Stargate series by watching Atlantis first!</td>
-                <td>Without delving into an in-depth analysis of Atlantis and Universe, I'll try and be as succinct as possible.</td>
-                <td>0.3600</td>
-                <td>0.5259</td>
-                <td>0.1659</td>
+                <td>There is a older man near a window.</td>
+                <td>A boy is near some stairs.</td>
+                <td>0.0800</td>
+                <td>0.2321</td>
+                <td>0.1521</td>
+            </tr>
+        
+            <tr class="fair">
+                <td>Fair</td>
+                <td>Many guards are standing in front of the starting line of a race.</td>
+                <td>Two men in business dress are standing by the side of a road.</td>
+                <td>0.0800</td>
+                <td>0.2655</td>
+                <td>0.1855</td>
             </tr>
         
             <tr class="poor">
                 <td>Poor</td>
-                <td>Freeman's civil hearing may be, on the surface, about a driver's license.</td>
-                <td>Freeman said not having a driver license has been a burden.</td>
-                <td>0.3500</td>
-                <td>0.6179</td>
-                <td>0.2679</td>
+                <td>19 hurt in New Orleans shooting</td>
+                <td>Police: 19 hurt in NOLA Mother's Day shooting</td>
+                <td>0.8800</td>
+                <td>0.6648</td>
+                <td>0.2152</td>
             </tr>
         
             <tr class="poor">
                 <td>Poor</td>
-                <td>Fast Picture Viewer has an extensive pack for the low price of $9.99 and it appears to cover them all.</td>
-                <td>Fast Picture Viewer is $9.99 and works just fine on 64-bit Windows 7 (I'm using it myself).</td>
-                <td>0.7600</td>
-                <td>0.3999</td>
-                <td>0.3601</td>
+                <td>I have a standing/sitting desk at work and really like it.</td>
+                <td>As mentioned by other responders, it turns out that using a standing desk isn't necessarily a perfect solution.</td>
+                <td>0.4400</td>
+                <td>0.6800</td>
+                <td>0.2400</td>
             </tr>
         
             <tr class="poor">
                 <td>Poor</td>
-                <td>Stocks close 0.39% higher</td>
-                <td>Stocks close 2.47% higher</td>
-                <td>0.3600</td>
-                <td>0.9033</td>
-                <td>0.5433</td>
+                <td>A skateboarder jumps off the stairs.</td>
+                <td>A dog jumps off the stairs.</td>
+                <td>0.1600</td>
+                <td>0.5656</td>
+                <td>0.4056</td>
             </tr>
         
         </table>
@@ -428,8 +431,6 @@
             <tr>
                 <th>Category</th>
                 <th>Error Range</th>
-                <th>Count</th>
-                <th>Percentage</th>
             </tr>
     
             <tr>
