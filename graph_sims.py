@@ -68,14 +68,14 @@ def trace_over_time(df, sent_model, target_narrative, timeframe, sim_threshold=0
     """
     # Filter the dataframe based on the timeframe and similarity threshold
     filtered_df = df[(df["Datetime"] >= timeframe[0]) & (df["Datetime"] <= timeframe[1])].reset_index(drop=True)
-    results = Results(sent_model, filtered_df, 100000, [target_narrative])
+    results = Results(sent_model, filtered_df, 1000000, [target_narrative])
     filtered_df = filtered_df[results.similarities >= sim_threshold]
     index_list = filtered_df.index.tolist()
     filtered_df["Similarity"] = results.similarities[index_list, 0]  # First column
     return filtered_df
 
 if __name__ == "__main__":
-    target_narrative = "The 2020 election was a hoax"
+    target_narrative = "The 2020 election was stolen"
     file = "tweets/full_tweets.csv"
     summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
     sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')

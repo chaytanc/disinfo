@@ -14,7 +14,7 @@ export default function TweetAnalysisDashboard() {
   // Filter parameters
   const [startDate, setStartDate] = useState('2020-11-01');
   const [endDate, setEndDate] = useState('2020-12-01');
-  const [targetNarrative, setTargetNarrative] = useState('The 2020 election was a hoax');
+  const [targetNarrative, setTargetNarrative] = useState('The 2020 election was stolen');
   const [threshold, setThreshold] = useState(0.5);
   const [numNarratives, setNumNarratives] = useState(3);
   const [groupedData, setGroupedData] = useState({});

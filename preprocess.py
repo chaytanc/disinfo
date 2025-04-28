@@ -57,9 +57,11 @@ def embed_narratives(model, narratives):
 def process_full_tweets(file):
     """ Processes csv files from Junkipedia Twitter data. """
     df = read_media(file)
-    df["Tweet"] = df["post_body_text"]
+    # df["Tweet"] = df["post_body_text"] +  "Embedded: " + df["EmbeddedContentText"]
+    df["embedded"] = "Embedded content: "
+    df["Tweet"] = df[["post_body_text", "embedded", "EmbeddedContentText"]].apply(lambda row: row.dropna().tolist(), axis=1).str[0]
     # df["Datetime"] = pd.to_datetime(df["date"], format="%Y-%m-%d %H:%M:%S")
-    df["Datetime"] = pd.to_datetime(df["published_at"], format="%Y-%m-%dT%H:%M:%S.%fZ").dt.floor('S')
+    df["Datetime"] = pd.to_datetime(df["published_at"], format="%Y-%m-%dT%H:%M:%S.%fZ").dt.floor('s')
     df["id"] = df["PostId"]
     df.to_csv("tweets/full_" + os.path.basename(file))
 
@@ -72,4 +74,4 @@ def add_datetime_column(df):
     return df
 # TODO final analysis on specific time range (June 01 2015 to present)
 
-# process_full_tweets("tweets/tweets_JoeRogan.csv")
+process_full_tweets("tweets/tweets_FoxFull.csv")
