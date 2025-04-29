@@ -9,6 +9,7 @@ from graph_sims import trace_over_time, graph_timeseries
 import os
 import numpy as np
 import json
+import datetime
 
 tweets_dir = 'tweets'
 # file = "tweets/full_tweets.csv"
@@ -53,6 +54,7 @@ def api_trace_over_time():
         # Convert DataFrame to records
         records = filtered_df.to_dict('records')
         
+        # TODO this is unnecessary
         # Convert any JSON strings to proper objects
         for record in records:
             for key, value in record.items():
@@ -95,6 +97,112 @@ def api_generate_narratives():
     
     # Return the results as an array
     return jsonify({'narratives': narratives_obj})
+
+
+@app.route('/save-filtered-data', methods=['POST'])
+def save_filtered_data():
+    try:
+        # Get data from request
+        data = request.json
+        filtered_data = data.get('filteredData')
+        
+        if not filtered_data:
+            return jsonify({'error': 'No filtered data provided'}), 400
+            
+        # Convert to DataFrame
+        df = pd.DataFrame(filtered_data)
+        
+        # Create a save directory if it doesn't exist
+        save_dir = os.path.join('saved_data')
+        os.makedirs(save_dir, exist_ok=True)
+        
+        # Generate unique filename based on timestamp
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"filtered_data_{timestamp}.pkl"
+        filepath = os.path.join(save_dir, filename)
+        
+        # Save as pickle
+        df.to_pickle(filepath)
+        
+        # Also save as CSV for easier access if needed
+        csv_filepath = os.path.join(save_dir, f"filtered_data_{timestamp}.csv")
+        df.to_csv(csv_filepath, index=False)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Data saved successfully as {filename}',
+            'filename': filename,
+            'rowCount': len(df)
+        })
+        
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+
+# Optional: Add an endpoint to list saved datasets
+@app.route('/list-saved-data', methods=['GET'])
+def list_saved_data():
+    try:
+        save_dir = os.path.join('saved_data')
+        if not os.path.exists(save_dir):
+            return jsonify({'datasets': []})
+            
+        files = [f for f in os.listdir(save_dir) if f.endswith('.pkl')]
+        files.sort(reverse=True)  # Most recent first
+        
+        return jsonify({'datasets': files})
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), 500
+
+
+@app.route('/load-saved-data', methods=['POST'])
+def load_saved_data():
+    try:
+        # Get filename from request
+        data = request.json
+        filename = data.get('filename')
+        
+        if not filename:
+            return jsonify({'error': 'No filename provided'}), 400
+            
+        # Build path to saved file
+        save_dir = os.path.join('saved_data')
+        filepath = os.path.join(save_dir, filename)
+        
+        # Check if file exists
+        if not os.path.exists(filepath):
+            return jsonify({'error': f'File {filename} not found'}), 404
+        
+        # Load pickle file
+        df = pd.read_pickle(filepath)
+        
+        # Replace NaN values with None for JSON serialization
+        df = df.replace({np.nan: None})
+        
+        # Convert DataFrame to records
+        records = df.to_dict('records')
+        
+        return jsonify({
+            'success': True,
+            'filename': filename,
+            'data': records,
+            'rowCount': len(records)
+        })
+        
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({
+            'error': str(e)
+        }), 500
+    
 
 if __name__ == '__main__':
     app.run(debug=True)

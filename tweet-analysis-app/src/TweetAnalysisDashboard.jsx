@@ -10,6 +10,8 @@ export default function TweetAnalysisDashboard() {
   const [narratives, setNarratives] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
   
   // Filter parameters
   const [startDate, setStartDate] = useState('2020-11-01');
@@ -143,6 +145,50 @@ export default function TweetAnalysisDashboard() {
       console.error('Error generating narratives:', error);
     } finally {
       setIsProcessing(false);
+    }
+  };
+  
+// NEW: Function to save filtered data
+  const saveFilteredData = async () => {
+    if (data.length === 0) {
+      setSaveMessage('No data to save. Please apply filters first.');
+      return;
+    }
+    
+    setIsSaving(true);
+    setSaveMessage('');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/save-filtered-data`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filteredData: data,
+          metadata: {
+            startDate,
+            endDate,
+            targetNarrative,
+            threshold,
+            selectedDatasets,
+            generatedAt: new Date().toISOString()
+          }
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save data');
+      }
+      
+      const result = await response.json();
+      setSaveMessage(`Successfully saved ${result.rowCount} records as ${result.filename}`);
+      
+    } catch (error) {
+      console.error('Error saving filtered data:', error);
+      setSaveMessage(`Error: ${error.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
   
@@ -325,6 +371,31 @@ export default function TweetAnalysisDashboard() {
           <p className="text-gray-600 text-sm mb-1">Time: {new Date(selectedTweet.Datetime).toLocaleString()}</p>
           <p className="text-gray-600 text-sm mb-2">Similarity Score: {selectedTweet.Similarity.toFixed(3)}</p>
           <p className="italic">{selectedTweet.Tweet}</p>
+        </div>
+      )}
+
+      {/* Save Data Section - NEW */}
+      {data.length > 0 && (
+        <div className="bg-white p-4 rounded shadow mb-6">
+          <h3 className="font-bold mb-4">Save Current Data</h3>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={saveFilteredData}
+              disabled={isSaving || data.length === 0}
+              className="bg-purple-500 hover:bg-purple-600 text-white py-2 px-6 rounded disabled:bg-gray-400"
+            >
+              {isSaving ? 'Saving...' : 'Save Data for Analysis'}
+            </button>
+            
+            {saveMessage && (
+              <div className={`text-sm ${saveMessage.includes('Error') ? 'text-red-500' : 'text-green-600'}`}>
+                {saveMessage}
+              </div>
+            )}
+          </div>
+          <p className="text-sm text-gray-500 mt-2">
+            Saves the current filtered dataset ({data.length} records) for offline analysis.
+          </p>
         </div>
       )}
       

@@ -4,6 +4,7 @@ import os
 
 
 def read_media(file):
+    """ Returns a pandas dataframe of the file. """
     if file.endswith(".csv"):
         try:
             df = pd.read_csv(file, encoding="utf-8", encoding_errors="ignore")
