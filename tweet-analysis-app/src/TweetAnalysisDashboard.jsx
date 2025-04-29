@@ -3,14 +3,14 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 
 const API_BASE_URL = 'http://localhost:5000';
 
-export default function TweetAnalysisDashboard() {
+export default function TweetAnalysisDashboard({ loadedData }) {
   // State variables
   const [data, setData] = useState([]);
   const [selectedTweet, setSelectedTweet] = useState(null);
   const [narratives, setNarratives] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   
   // Filter parameters
@@ -33,6 +33,41 @@ const [isSaving, setIsSaving] = useState(false);
   useEffect(() => {
     fetchDatasets();
   }, []);
+
+  // Handle loadedData changes
+  useEffect(() => {
+    if (loadedData && loadedData.length > 0) {
+      // Process loaded data
+      console.log("Processing loaded data in dashboard:", loadedData.length, "records");
+      
+      // Group the data by dataset name
+      const grouped = {};
+      const datasetNames = [...new Set(loadedData.map(item => item.datasetName || 'unknown'))];
+      
+      datasetNames.forEach(datasetName => {
+        grouped[datasetName] = loadedData
+          .filter(d => (d.datasetName || 'unknown') === datasetName)
+          .sort((a, b) => new Date(a.Datetime) - new Date(b.Datetime));
+      });
+      
+      // Update state with loaded data
+      setData(loadedData);
+      setGroupedData(grouped);
+      
+      // Extract parameters from the first record if available
+      if (loadedData[0].metadata) {
+        const metadata = loadedData[0].metadata;
+        if (metadata.startDate) setStartDate(metadata.startDate);
+        if (metadata.endDate) setEndDate(metadata.endDate);
+        if (metadata.targetNarrative) setTargetNarrative(metadata.targetNarrative);
+        if (metadata.threshold) setThreshold(metadata.threshold);
+        if (metadata.selectedDatasets) setSelectedDatasets(metadata.selectedDatasets);
+      }
+      
+      // Clear any existing narratives when loading new data
+      setNarratives([]);
+    }
+  }, [loadedData]);
   
   // Fetch datasets function
   const fetchDatasets = async () => {
