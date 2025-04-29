@@ -9,6 +9,7 @@ import numpy as np
 from mlx_lm import load 
 from sim_scores import Results
 from generate_narratives import Narrative_Generator
+from preprocess import read_media
 
 # Set the display precision
 pd.options.display.float_format = '{:.2f}'.format
@@ -16,25 +17,26 @@ np.set_printoptions(precision=2, suppress=True)
 
 # RQ: Can we show that set X had Y% similarity to Z narrative, which 
 # TODO params file yaml
-file = "trumptweets1205-127.csv"
-summary_model, tokenizer = load("mlx-community/Llama-3.2-3B-Instruct-4bit")
+file = "tweets/trumptweets1205-127.csv"
+df = read_media(file)
+summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
 sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 # file = "syria_articles/wsj_article.txt"
-max_tweets = 1000
-num_narratives = 8
+max_tweets = 100000
+num_narratives = 3
 # Do not change the order of this array
 # State Dept. Narratives
 narratives = ["Russia is an Innocent Victim", "The Collapse of Western Civilization is Imminent", "Popular Movements are U.S.-sponsored Color Revolutions",]
-trump_nars, _ = Narrative_Generator(summary_model, tokenizer, sent_model, file, num_narratives).generate_narratives()
+def run_narrative_generation(df):
+    generator = Narrative_Generator(summary_model, tokenizer, sent_model, df, num_narratives)
+    trump_nars, _, _ = generator.generate_narratives()
+    formatted = generator.format(trump_nars)
+    return formatted
 
 # Show results with highest similarity ratings in any narrative dimension
-results = Results(file, max_tweets, narratives)
-results.print_top_k(k=10, narrative_ind=3)
-
-# Use an LLM summary to generate possible narratives
-# https://huggingface.co/Ayush-1722/Meta-Llama-3-8B-Instruct-Summarize-v0.2-16K-LoRANET-Merged
-# see chatgpt logs for prototyping
-# https://chatgpt.com/c/6779fbe0-4960-800d-afe2-f5902b41de77
+print(run_narrative_generation(df))
+results = Results(sent_model, df, max_tweets, narratives)
+results.print_top_k(k=10, narrative_ind=0)
 
 # Compare RT article to WSJ article on same topic wrt generated possible russia narratives or expert narratives
 # eventually use actual disinfo database as baseline

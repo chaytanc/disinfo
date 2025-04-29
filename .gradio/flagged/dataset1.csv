@@ -1,0 +1,67 @@
+output,timestamp
+"'```json
+{
+  ""narrative1"": ""Job creation and investment in the US"",
+  ""narrative2"": ""Criticism of Mexico's trade practices""
+}
+```
+```json
+{
+  ""narrative1"": ""The hacking of the DNC was a result of poor security measures"",
+  ""narrative2"": ""The intelligence agencies are unreliable and biased""
+}
+```
+```json
+{
+  ""narrative1"": ""Criticism of the Affordable Care Act (ObamaCare)"",
+  ""narrative2"": ""Praise for the Trump administration's actions and policies""
+}
+```
+```json
+{
+  ""narrative1"": ""Praise for Donald Trump's presidency and his team"",
+  ""narrative2"": ""Trump's media appearances and interviews""
+}
+```
+```json
+{
+  ""narrative1"": ""The election was rigged and stolen from Trump"",
+  ""narrative2"": ""Trump's supporters are responsible for the violence and unrest""
+}
+```
+```json
+{
+  ""narrative1"": ""Campaign rallies and thank you tours"",
+  ""narrative2"": ""Military and veteran appreciation""
+}
+```
+```json
+{
+  ""narrative1"": ""Rememberance of past tragedies and events"",
+  ""narrative2"": ""Focus on national security and international relations""
+}
+```
+```json
+{
+  ""narrative1"": ""Criticism of mainstream media for bias and dishonesty"",
+  ""narrative2"": ""Defense of Trump's actions and policies""
+}
+```
+Number of tweets selected is greater than total.                  
+Continuing with 297 tweets total.
+10 Most similar tweets to narrative 
+""Russia is an Innocent Victim"": 
+                                                                                                                                             Tweet  ...  Sims
+220  .@FoxNews ""Outgoing CIA Chief, John Brennan, blasts Pres-Elect Trump on Russia threat. Does not fully understand."" Oh really, couldn't do...  ...  0.41
+90         Vladimir Putin said today about Hillary and Dems: ""In my opinion, it is humiliating. One must be able to lose with dignity.""  So true!  ...  0.42
+193                            Russia has never tried to use leverage over me. I HAVE NOTHING TO DO WITH RUSSIA - NO DEALS, NO LOANS, NO NOTHING!  ...  0.44
+191                                                        'BuzzFeed Runs Unverifiable Trump-Russia Claims' #FakeNews \r\nhttps://t.co/d6daCFZHNh  ...  0.44
+221    much worse - just look at Syria (red line), Crimea, Ukraine and the build-up of Russian nukes. Not good! Was this the leaker of Fake News?  ...  0.46
+110                     Russians are playing @CNN and @NBCNews for such fools - funny to watch, they don't have a clue! @FoxNews totally gets it!  ...  0.46
+168  have enough problems around the world without yet another one. When I am President, Russia will respect us far more than they do now and....  ...  0.51
+203  Totally made up facts by sleazebag political operatives, both Democrats and Republicans - FAKE NEWS! Russia says nothing exists. Probably...  ...  0.52
+167  Having a good relationship with Russia is a good thing, not a bad thing. Only ""stupid"" people, or fools, would think that it is bad! We.....  ...  0.53
+192    Russia just said the unverified report paid for by political opponents is ""A COMPLETE AND TOTAL FABRICATION, UTTER NONSENSE."" Very unfair!  ...  0.56
+
+[10 rows x 3 columns]
+",2025-03-06 11:08:47.321436

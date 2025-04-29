@@ -1,0 +1,38 @@
+Model: sentence-transformers/all-MiniLM-L6-v2
+Dataset: GLUE STS-B (validation split)
+Pearson correlation: 0.8696 (p=0.0000e+00)
+Mean Squared Error: 0.0316
+Mean Absolute Error: 0.1383
+Number of examples: 1500
+
+Error metrics by human score range:
+Human score ≈ 0.0:
+  Average absolute error: 0.1424
+  Average signed error: 0.1276
+  Number of examples: 291
+  Overestimated: 84.5%, Underestimated: 15.5%
+
+Human score ≈ 0.25:
+  Average absolute error: 0.2043
+  Average signed error: 0.1834
+  Number of examples: 306
+  Overestimated: 88.9%, Underestimated: 11.1%
+
+Human score ≈ 0.5:
+  Average absolute error: 0.1585
+  Average signed error: 0.1277
+  Number of examples: 363
+  Overestimated: 82.1%, Underestimated: 17.9%
+
+Human score ≈ 0.75:
+  Average absolute error: 0.0942
+  Average signed error: 0.0371
+  Number of examples: 379
+  Overestimated: 67.0%, Underestimated: 33.0%
+
+Human score ≈ 1.0:
+  Average absolute error: 0.0635
+  Average signed error: -0.0497
+  Number of examples: 161
+  Overestimated: 21.7%, Underestimated: 78.3%
+
