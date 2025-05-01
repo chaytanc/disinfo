@@ -27,6 +27,11 @@ def read_media(file):
             raise ValueError(f"Error loading file '{file}': {e}")
     else:
         raise ValueError("Unsupported file format. Please provide a .csv or .txt file.")
+    # Assumes that "Tweet" column is in every csv read
+    try:
+        df["AuthorTweet"] = "Author: " + df["ChannelName"] + "\nTweet: " + df["Tweet"]
+    except KeyError:
+        df["AuthorTweet"] = "Tweet: " + df["Tweet"]
 
     return df
 
@@ -66,6 +71,10 @@ def process_full_tweets(file):
     df["id"] = df["PostId"]
     df.to_csv("tweets/full_" + os.path.basename(file))
 
+def process_trump():
+    df = read_media("tweets/tweets_01-08-2021.csv")
+    df["ChannelName"] = "Donald Trump"
+    df.to_csv("tweets/tweets_01-08-2021.csv")
 
 def add_datetime_column(df):
     # arrange tweets in chronological order based on "Time" column
@@ -75,4 +84,7 @@ def add_datetime_column(df):
     return df
 # TODO final analysis on specific time range (June 01 2015 to present)
 
-process_full_tweets("tweets/tweets_FoxFull.csv")
+if __name__ == "__main__":
+    # process_full_tweets("tweets/tweets_FoxFull.csv")
+    # process_trump()
+    pass

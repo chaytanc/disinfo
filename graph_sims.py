@@ -13,7 +13,8 @@ import json
 def get_sim_timeseries(target_narrative, model, df):
     narrative_embed = model.encode(target_narrative, convert_to_tensor=True)
     timeseries = []
-    for tweet in tqdm(df["Tweet"]):
+
+    for tweet in tqdm(df["AuthorTweet"]):
         tweet_embed = model.encode(tweet, convert_to_tensor=True)
         sim = util.pytorch_cos_sim(tweet_embed, narrative_embed) 
         sim_value = sim.cpu().numpy().item()
@@ -71,7 +72,9 @@ def trace_over_time(df, sent_model, target_narrative, timeframe, sim_threshold=0
     results = Results(sent_model, filtered_df, 1000000, [target_narrative])
     filtered_df = filtered_df[results.similarities >= sim_threshold]
     index_list = filtered_df.index.tolist()
-    filtered_df["Similarity"] = results.similarities[index_list, 0]  # First column
+    # filtered_df["OriginalIndex"] = index_list
+    filtered_df["Similarity"] = results.similarities[index_list, 0]
+    filtered_df.reset_index(drop=False, inplace=True)
     return filtered_df
 
 if __name__ == "__main__":

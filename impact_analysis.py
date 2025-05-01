@@ -14,7 +14,7 @@ from mlx_lm import load
 # How many  w * retweets * similarity score
 # Go through and reverse polarity based on sentiment analysis model
 
-SYS_PROMPT = "You should evaluate if the following tweet is in support of, opposition to, or neutral to the following target narrative. If you are unsure you may mark that instead." 
+SYS_PROMPT = "You should evaluate if the following tweet is in support of (agreement with), opposition to (contradicts), or neutral to the following target narrative. If you are unsure you may mark that instead, which is preferable to being wrong." 
 class PolarityTester():
     def __init__(self, summary_model, tokenizer, data, target_narrative):
         self.summary_model = summary_model
@@ -33,7 +33,7 @@ class PolarityTester():
 
     def create_response_object(self, responses):
         """ 
-        Turn the one hot encoded positive, negative, neutral, unsure responses into a single response object 
+        Turn the one hot encoded support, opposition, neutral, unsure responses into a single response object 
         represented as a binary number 0-8 inclusive.
         """
         for i, resp in enumerate(responses):
@@ -80,6 +80,7 @@ class PolarityTester():
         for tweet in tqdm(self.df['Tweet']):
             resp = chain.invoke({"target_narrative": self.target_narrative, "tweet": tweet})
             if not resp:
+                print("Bad response")
                 continue
             responses.append(resp[0])
 
@@ -112,12 +113,13 @@ class PolarityTester():
             'unsure': 0
         }
         self.df['polarity_score'] = self.df['polarity'].map(polarity_map)
-        self.df['similarity_score'] = self.df['Similarity'] * self.df['polarity_score']
+        self.df['Similarity'] = self.df['Similarity'] * self.df['polarity_score']
+        print("Polarities: ", self.df['polarity'].value_counts())
 
 
     class TweetPolarity(BaseModel):
-        postive : int = Field(description="A 1 indicating the tweet is in support of the target narrative or a 0 indicating it is not")
-        negative: int = Field(description="A 1 indicating the tweet is in opposition to the target narrative or a 0 indicating it is not")
+        support: int = Field(description="A 1 indicating the tweet is in support of the target narrative or a 0 indicating it is not")
+        opposition: int = Field(description="A 1 indicating the tweet is in opposition to the target narrative or a 0 indicating it is not")
         neutral: int = Field(description="A 1 indicating the tweet is neutral to the target narrative or a 0 indicating it is not")
         unsure: int = Field(description="A 1 indicating you are unsure of the text's sentiment or a 0 indicating you are sure")
 

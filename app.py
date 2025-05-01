@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from generate_narratives import Narrative_Generator
+from impact_analysis import PolarityTester
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 from mlx_lm import load
@@ -10,11 +11,13 @@ import os
 import numpy as np
 import json
 import datetime
+from transformers import AutoModelForCausalLM
 
 tweets_dir = 'tweets'
 # file = "tweets/full_tweets.csv"
 summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
 sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+polarity_model, pol_tokenizer = load("mlx-community/Mistral-Small-24B-Instruct-2501-4bit")
 
 
 app = Flask(__name__)
@@ -50,6 +53,10 @@ def api_trace_over_time():
         
         # Replace NaN values with None (which becomes null in JSON)
         filtered_df = filtered_df.replace({np.nan: None})
+        p = PolarityTester(polarity_model, pol_tokenizer, filtered_df, target_narrative)
+        p.check_polarity()
+        p.multiply_similarity_and_polarity()
+        filtered_df = p.df
         
         # Convert DataFrame to records
         records = filtered_df.to_dict('records')
