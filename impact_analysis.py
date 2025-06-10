@@ -9,18 +9,26 @@ from langchain_community.llms.mlx_pipeline import MLXPipeline
 import re
 import json
 from mlx_lm import load 
+import mlx.core as mx
+import gc
 
 
-# How many  w * retweets * similarity score
-# Go through and reverse polarity based on sentiment analysis model
+# Configure MLX to use GPU
+mx.set_default_device(mx.gpu)
 
-SYS_PROMPT = "You should evaluate if the following tweet is in support of (agreement with), opposition to (contradicts), or neutral to the following target narrative. If you are unsure you may mark that instead, which is preferable to being wrong." 
+SYS_PROMPT = "You should evaluate if the following tweet is in support of (agreement with), opposition to (contradicts), or neutral to the following target narrative. Headlines that just report news or have very little detectable slant are neutral. Opposition must directly challenge / oppose the target narrative otherwise it is considered neutral, supportive, or unsure. If you are unsure you may mark that instead, which is preferable to being wrong." 
 class PolarityTester():
     def __init__(self, summary_model, tokenizer, data, target_narrative):
         self.summary_model = summary_model
         self.tokenizer = tokenizer
         self.df = data
         self.target_narrative = target_narrative
+        parser = JsonOutputParser(pydantic_object=self.TweetPolarity)
+        llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer, pipeline_kwargs={
+            "temp": 1.0,
+          })
+        prompt = self.create_prompt(parser)
+        self.chain = prompt | llm | self.parse_json_objects 
 
     def create_prompt(self, parser):
         prompt = PromptTemplate(
@@ -70,15 +78,10 @@ class PolarityTester():
     
 
     def check_polarity(self):
-        parser = JsonOutputParser(pydantic_object=self.TweetPolarity)
-        llm = MLXPipeline(model=self.summary_model, tokenizer=self.tokenizer, pipeline_kwargs={
-            "temp": 1.0,
-          })
-        prompt = self.create_prompt(parser)
-        chain = prompt | llm | self.parse_json_objects 
+        gc.collect()
         responses = []
         for tweet in tqdm(self.df['Tweet']):
-            resp = chain.invoke({"target_narrative": self.target_narrative, "tweet": tweet})
+            resp = self.chain.invoke({"target_narrative": self.target_narrative, "tweet": tweet})
             if not resp:
                 print("Bad response")
                 continue
@@ -97,7 +100,15 @@ class PolarityTester():
                 # TODO throw an error (or at least warning) if unsure?
                 resp['polarity'] = 'unsure'
         response_df = pd.DataFrame(responses)
-        self.df['polarity'] = response_df['polarity']
+        
+        # Handle potential length mismatch due to filtering None responses
+        if len(response_df) < len(self.df):
+            print(f"Warning: {len(self.df) - len(response_df)} tweets had empty responses")
+            # Pad with 'unsure' to match original length
+            padding = pd.Series(['unsure'] * (len(self.df) - len(response_df)))
+            self.df['polarity'] = pd.concat([response_df['polarity'], padding]).reset_index(drop=True)
+        else:
+            self.df['polarity'] = response_df['polarity']
 
     
     def multiply_similarity_and_polarity(self):
@@ -115,6 +126,7 @@ class PolarityTester():
         self.df['polarity_score'] = self.df['polarity'].map(polarity_map)
         self.df['Similarity'] = self.df['Similarity'] * self.df['polarity_score']
         print("Polarities: ", self.df['polarity'].value_counts())
+        gc.collect()
 
 
     class TweetPolarity(BaseModel):
@@ -124,6 +136,10 @@ class PolarityTester():
         unsure: int = Field(description="A 1 indicating you are unsure of the text's sentiment or a 0 indicating you are sure")
 
 if __name__ == "__main__":
+    # Configure MLX to use GPU
+    mx.set_default_device(mx.gpu)
+    print(f"MLX is using device: {mx.default_device()}")
+    
     file = "saved_data/filtered_data_20250428_194522.csv"
     df = read_media(file)
     print(df[:9])

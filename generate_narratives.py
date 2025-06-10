@@ -14,8 +14,6 @@ from tqdm import tqdm
 # Simple prompt
 SYS_PROMPT = "You should find the top two dominant narratives in the following batch of tweets. Do not cite which tweets correspond to the narratives, just supply the narrative summaries. You must always return valid JSON fenced by a markdown code block. Do not return any additional text. "
 
-smallest_batch_size = 10
-
 class Narrative_Generator():
     def __init__(self, summary_model, tokenizer, embedding_model, data, num_narratives):
         self.summary_model = summary_model

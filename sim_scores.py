@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from sentence_transformers import util
 from preprocess import *
+from tqdm import tqdm
+import gc
 
 class Results():
     def __init__(self, model, tweet_df, n_tweets, narratives):
@@ -20,8 +22,9 @@ class Results():
 
 
     def get_results(self):
+        gc.collect()
         nar_embeds = embed_narratives(self.model, self.narratives)
-        for i, tweet in enumerate(self.df["Tweet"][:self.n_tweets]):
+        for i, tweet in tqdm(enumerate(self.df["Tweet"][:self.n_tweets])):
             embedding = self.model.encode(tweet, convert_to_tensor=True)
             tweet_sims = np.empty(len(nar_embeds))
             for j, nar_embed in enumerate(nar_embeds):
@@ -29,6 +32,7 @@ class Results():
                 tweet_sims[j] = sim
             self.similarities[i] = tweet_sims
             self.tweets.loc[i] = {"Tweet" : tweet, "Sim_Index" : i}
+        gc.collect()
 
 
     def sort_by_narrative(self, narrative_ind):

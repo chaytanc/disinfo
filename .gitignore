@@ -10,6 +10,8 @@ __pycache__/
 .vscode/
 .hf/
 .DS_Store
+saved_data/
+tweets/full_mediamix2024.csv
 
 # Distribution / packaging
 .Python
