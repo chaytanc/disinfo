@@ -1,12 +1,10 @@
 from sim_scores import Results
-from generate_narratives import Narrative_Generator
 from sentence_transformers import SentenceTransformer, util
 from mlx_lm import load
 from preprocess import *
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from tqdm import tqdm
-import json
 
 # get narrative to graph similarity to
 # get sim_scores for each tweet over time
