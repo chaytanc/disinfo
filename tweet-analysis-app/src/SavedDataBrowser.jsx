@@ -5,7 +5,6 @@ const API_BASE_URL = 'http://localhost:5000';
 export default function SavedDataBrowser({ onLoadData }) {
   const [savedDatasets, setSavedDatasets] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedDataset, setSelectedDataset] = useState(null);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -38,14 +37,11 @@ export default function SavedDataBrowser({ onLoadData }) {
     }
   };
 
-  // To load a saved dataset, we would need to add a new endpoint in the Flask app
-  // For this example, I'm adding the placeholder for it
   const loadDataset = async (filename) => {
     setIsLoading(true);
     setMessage('');
     
     try {
-      // We need to implement this endpoint in the Flask app
       const response = await fetch(`${API_BASE_URL}/load-saved-data`, {
         method: 'POST',
         headers: {

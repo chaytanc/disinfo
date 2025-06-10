@@ -23,13 +23,11 @@ export default function TweetAnalysisDashboard({ loadedData }) {
   const [datasets, setDatasets] = useState(["full_tweets.csv"]);
   const [selectedDatasets, setSelectedDatasets] = useState(["full_tweets.csv"]);
   
-  // Debug useEffect to track state changes
   useEffect(() => {
     console.log("Data changed:", data.length);
     console.log("GroupedData:", groupedData);
   }, [data, groupedData]);
   
-  // Add useEffect to fetch datasets when component mounts
   useEffect(() => {
     fetchDatasets();
   }, []);
@@ -37,7 +35,6 @@ export default function TweetAnalysisDashboard({ loadedData }) {
   // Handle loadedData changes
   useEffect(() => {
     if (loadedData && loadedData.length > 0) {
-      // Process loaded data
       console.log("Processing loaded data in dashboard:", loadedData.length, "records");
       
       // Group the data by dataset name
@@ -50,7 +47,7 @@ export default function TweetAnalysisDashboard({ loadedData }) {
           .sort((a, b) => new Date(a.Datetime) - new Date(b.Datetime));
       });
       
-      // Update state with loaded data
+      // Update with loaded data
       setData(loadedData);
       setGroupedData(grouped);
       
@@ -131,8 +128,6 @@ export default function TweetAnalysisDashboard({ loadedData }) {
   
       // Flatten the results and then sort chronologically by Datetime
       let combinedData = results.flat();
-      
-      // Simple sort by Datetime
       combinedData.sort((a, b) => a.Datetime - b.Datetime);
       
       console.log("Combined and sorted data points:", combinedData.length);
@@ -183,7 +178,6 @@ export default function TweetAnalysisDashboard({ loadedData }) {
     }
   };
   
-// NEW: Function to save filtered data
   const saveFilteredData = async () => {
     if (data.length === 0) {
       setSaveMessage('No data to save. Please apply filters first.');

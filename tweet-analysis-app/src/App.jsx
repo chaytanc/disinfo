@@ -3,10 +3,9 @@ import TweetAnalysisDashboard from './TweetAnalysisDashboard';
 import SavedDataBrowser from './SavedDataBrowser';
 
 export default function App() {
-  // State to hold loaded data at the App level
   const [loadedData, setLoadedData] = useState(null);
   
-  // This function will be called when a dataset is loaded from SavedDataBrowser
+  // This function is called when a dataset is loaded from SavedDataBrowser
   const handleDataLoad = (data) => {
     console.log("Data loaded in App:", data.length, "records");
     setLoadedData(data);
