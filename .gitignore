@@ -12,6 +12,7 @@ __pycache__/
 .DS_Store
 saved_data/
 tweets/full_mediamix2024.csv
+tweets/mediamix2024.csv
 
 # Distribution / packaging
 .Python
