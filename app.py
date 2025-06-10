@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from generate_narratives import Narrative_Generator
+from impact_analysis import PolarityTester
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 from mlx_lm import load
@@ -10,22 +11,48 @@ import os
 import numpy as np
 import json
 import datetime
+import mlx.core as mx
+from transformers import AutoModelForCausalLM
+import gc
+import contextlib
+
+# Set MLX to use GPU
+mx.set_default_device(mx.gpu)
+
+# Verify GPU is being used
+print(f"MLX is using device: {mx.default_device()}")
 
 tweets_dir = 'tweets'
-# file = "tweets/full_tweets.csv"
-summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
-sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
+# Load models using MLX with explicit GPU configuration
+summary_model, tokenizer = load("mlx-community/Mistral-Nemo-Instruct-2407-4bit")
+# summary_model, tokenizer = load("mlx-community/Mistral-Small-24B-Instruct-2501-4bit")
+sent_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+polarity_model, pol_tokenizer = load("mlx-community/Mistral-Small-24B-Instruct-2501-4bit")
+
+# Configure SentenceTransformer to use MPS (Metal Performance Shaders)
+# This enables GPU acceleration for PyTorch-based models on Mac
+import torch
+if torch.backends.mps.is_available():
+    sent_model = sent_model.to('mps')
+    print("SentenceTransformer using MPS (GPU)")
+else:
+    print("MPS not available, SentenceTransformer using CPU")
 
 app = Flask(__name__)
-CORS(app)
+# CORS(app)
+CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": "*"}})
 
 @app.route('/post-datasets', methods=['POST'])
 def api_post_datasets():
     """ Assumes every csv file in tweets_dir is compatible w analysis 
     (has Tweet, Datetime cols). Returns these in a jsonified list."""
-    files = [os.path.basename(f) for f in os.listdir(tweets_dir) 
-             if os.path.isfile(os.path.join(tweets_dir, f)) and f.endswith('.csv')]
+    files = [
+        os.path.relpath(os.path.join(root, f), tweets_dir)
+        for root, _, filenames in os.walk(tweets_dir)
+        for f in filenames
+        if f.endswith('.csv')
+    ]
     result = {
         'files': files 
     }
@@ -34,6 +61,7 @@ def api_post_datasets():
 
 @app.route('/trace-over-time', methods=['POST'])
 def api_trace_over_time():
+    gc.collect()
     try:
         # Get parameters from request
         data = request.json
@@ -50,19 +78,15 @@ def api_trace_over_time():
         
         # Replace NaN values with None (which becomes null in JSON)
         filtered_df = filtered_df.replace({np.nan: None})
+        # Use a context manager to ensure proper cleanup
+        # p = PolarityTester(polarity_model, pol_tokenizer, filtered_df, target_narrative)
+        # p.check_polarity()
+        # p.multiply_similarity_and_polarity()
+        # filtered_df = p.df
+        gc.collect()
         
         # Convert DataFrame to records
         records = filtered_df.to_dict('records')
-        
-        # TODO this is unnecessary
-        # Convert any JSON strings to proper objects
-        for record in records:
-            for key, value in record.items():
-                if isinstance(value, str) and value.startswith('{') and value.endswith('}'):
-                    try:
-                        record[key] = json.loads(value)
-                    except:
-                        pass  # Keep as string if it's not valid JSON
         
         # Return the filtered data
         result = {
@@ -202,7 +226,7 @@ def load_saved_data():
         return jsonify({
             'error': str(e)
         }), 500
-    
+
 
 if __name__ == '__main__':
     app.run(debug=True)

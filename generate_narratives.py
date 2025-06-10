@@ -1,5 +1,5 @@
 import numpy as np
-from mlx_lm import generate
+# from mlx_lm import generate
 from sklearn.cluster import KMeans
 
 from langchain_core.output_parsers import JsonOutputParser
@@ -9,14 +9,10 @@ from langchain_community.llms.mlx_pipeline import MLXPipeline
 
 import json
 import re
-from dotenv import load_dotenv
+from tqdm import tqdm
 
-# TODO do I still need this?
-load_dotenv()
 # Simple prompt
 SYS_PROMPT = "You should find the top two dominant narratives in the following batch of tweets. Do not cite which tweets correspond to the narratives, just supply the narrative summaries. You must always return valid JSON fenced by a markdown code block. Do not return any additional text. "
-
-smallest_batch_size = 10
 
 class Narrative_Generator():
     def __init__(self, summary_model, tokenizer, embedding_model, data, num_narratives):
@@ -26,20 +22,6 @@ class Narrative_Generator():
         self.num_narratives = num_narratives
         self.df = data
         # You could use preprocess_context_window here instead if data is too big...
-
-
-    def create_prompt(self, tokenizer, user_prompt):
-        messages = [
-            {"role": "system", "content": SYS_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ]
-        
-        prompt = tokenizer.apply_chat_template(
-                messages, 
-                tokenize=False, 
-                add_generation_prompt=True
-        )
-        return prompt
 
 
     def create_format_prompt(self, parser):
@@ -60,18 +42,6 @@ class Narrative_Generator():
         # Chunk tweets by cluster labels
         clustered_tweets = [tweets[clusters.labels_ == label] for label in unique_labels]
         return clustered_tweets
-
-
-    # TODO yaml
-    # TODO private functions
-    def process_chunk(self, chunk, model, tokenizer):
-        prompt = self.create_prompt(tokenizer, SYS_PROMPT, user_prompt=chunk)
-        response = generate(
-            model, tokenizer, 
-            #temperature=0.9, top_p=0.8, 
-            max_tokens=512, prompt=prompt, 
-            verbose=True)
-        return response, prompt
 
 
     def generate_narratives(self, progress=None):
@@ -95,7 +65,7 @@ class Narrative_Generator():
                     continue
                 responses.append(resp[0])
         else:
-            for chunk in (clustered_tweets):
+            for chunk in tqdm(clustered_tweets):
                 resp = chain.invoke({"query": chunk})
                 if not resp:
                     continue
