@@ -366,6 +366,7 @@ export default function TweetAnalysisDashboard({ loadedData }) {
               />
               <YAxis
                 domain={[0, 1]}
+                // domain={[-1,1]}
                 label={{ value: 'Similarity Score', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip content={<CustomTooltip />} />

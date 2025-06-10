@@ -66,10 +66,12 @@ def process_full_tweets(file):
     # df["Tweet"] = df["post_body_text"] +  "Embedded: " + df["EmbeddedContentText"]
     df["embedded"] = "Embedded content: "
     df["Tweet"] = df[["post_body_text", "embedded", "EmbeddedContentText"]].apply(lambda row: row.dropna().tolist(), axis=1).str[0]
+    df["AuthorTweet"] = "Author: " + df["ChannelName"] + "\nTweet: " + df["Tweet"]
     # df["Datetime"] = pd.to_datetime(df["date"], format="%Y-%m-%d %H:%M:%S")
     df["Datetime"] = pd.to_datetime(df["published_at"], format="%Y-%m-%dT%H:%M:%S.%fZ").dt.floor('s')
     df["id"] = df["PostId"]
     df.to_csv("tweets/full_" + os.path.basename(file))
+    return df
 
 def process_trump():
     df = read_media("tweets/tweets_01-08-2021.csv")
@@ -82,9 +84,55 @@ def add_datetime_column(df):
         df["Datetime"] = pd.to_datetime(df["Date"], format="%Y-%m-%d %H:%M:%S%z")
     df = df.sort_values(by='Datetime', ascending=True) # no .reset_index(drop=True)
     return df
-# TODO final analysis on specific time range (June 01 2015 to present)
+
+
+def separate_channels(df, output_dir="channel_datasets"):
+    """
+    Separates a CSV file into multiple files based on unique ChannelName values.
+    
+    Args:
+        file (str): Path to the CSV file.
+        output_dir (str): Directory where the separated files will be saved.
+    
+    Returns:
+        dict: A dictionary mapping channel names to their respective file paths.
+    """
+    # Create output directory if it doesn't exist
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    # Check if ChannelName column exists
+    if "ChannelName" not in df.columns:
+        raise ValueError("Error: The file does not contain a 'ChannelName' column.")
+    
+    # Get unique channel names
+    channel_names = df["ChannelName"].unique()
+    print(f"Found {len(channel_names)} unique channels")
+    
+    # Dictionary to store file paths for each channel
+    channel_files = {}
+    
+    # Create a separate file for each channel
+    for channel in channel_names:
+        # Filter rows for current channel
+        channel_df = df[df["ChannelName"] == channel]
+        
+        # Clean channel name for filename
+        clean_channel = "".join(c if c.isalnum() else "_" for c in str(channel))
+        filename = f"{clean_channel}.csv"
+        filepath = os.path.join(output_dir, filename)
+        
+        # Save to CSV
+        channel_df.to_csv(filepath, index=False)
+        print(f"Saved {len(channel_df)} rows for '{channel}' to {filepath}")
+        
+        # Store filepath in dictionary
+        channel_files[channel] = filepath
+    
+    return channel_files
 
 if __name__ == "__main__":
-    # process_full_tweets("tweets/tweets_FoxFull.csv")
+    df = process_full_tweets("tweets/full_mediamix2024.csv")
+    channel_files = separate_channels(df)
     # process_trump()
     pass
