@@ -9,12 +9,12 @@ from preprocess import read_media
 from graph_sims import trace_over_time, graph_timeseries
 import os
 import numpy as np
-import json
 import datetime
 import mlx.core as mx
 from transformers import AutoModelForCausalLM
 import gc
 import contextlib
+import torch
 
 # Set MLX to use GPU
 mx.set_default_device(mx.gpu)
@@ -32,7 +32,6 @@ polarity_model, pol_tokenizer = load("mlx-community/Mistral-Small-24B-Instruct-2
 
 # Configure SentenceTransformer to use MPS (Metal Performance Shaders)
 # This enables GPU acceleration for PyTorch-based models on Mac
-import torch
 if torch.backends.mps.is_available():
     sent_model = sent_model.to('mps')
     print("SentenceTransformer using MPS (GPU)")
