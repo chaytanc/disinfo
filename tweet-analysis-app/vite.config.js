@@ -5,6 +5,10 @@ export default defineConfig({
   plugins: [react(),
   ],
   server: {
-    port: 3000, // Optional: Set the port, default is 5173
+    host: '0.0.0.0',
+    port: 3000,
+    strictPort: true,
+    hmr: { host: 'narrativedashboard.xyz', protocol: 'wss' },
+    allowedHosts: true, 
   },
 })

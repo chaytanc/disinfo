@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, Blueprint, request, jsonify
 from flask_cors import CORS
 from generate_narratives import Narrative_Generator
 from impact_analysis import PolarityTester
@@ -39,10 +39,19 @@ else:
     print("MPS not available, SentenceTransformer using CPU")
 
 app = Flask(__name__)
-# CORS(app)
-CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": "*"}})
+api = Blueprint("api", __name__, url_prefix="/api")
 
-@app.route('/post-datasets', methods=['POST'])
+
+@api.before_request
+def reject_unknown_preflights():
+    if request.method == "OPTIONS" and \
+       request.headers.get("Origin") not in (
+           "https://narrativedashboard.xyz",
+           "https://www.narrativedashboard.xyz"):
+        return "Forbidden", 403
+
+
+@api.route('/post-datasets', methods=['POST'])
 def api_post_datasets():
     """ Assumes every csv file in tweets_dir is compatible w analysis 
     (has Tweet, Datetime cols). Returns these in a jsonified list."""
@@ -58,7 +67,7 @@ def api_post_datasets():
     
     return jsonify(result)
 
-@app.route('/trace-over-time', methods=['POST'])
+@api.route('/trace-over-time', methods=['POST'])
 def api_trace_over_time():
     gc.collect()
     try:
@@ -106,7 +115,7 @@ def api_trace_over_time():
             'error': str(e)
         }), 500
 
-@app.route('/generate-narratives', methods=['POST'])
+@api.route('/generate-narratives', methods=['POST'])
 def api_generate_narratives():
     data = request.json
     
@@ -122,7 +131,7 @@ def api_generate_narratives():
     return jsonify({'narratives': narratives_obj})
 
 
-@app.route('/save-filtered-data', methods=['POST'])
+@api.route('/save-filtered-data', methods=['POST'])
 def save_filtered_data():
     try:
         # Get data from request
@@ -167,7 +176,7 @@ def save_filtered_data():
 
 
 # Optional: Add an endpoint to list saved datasets
-@app.route('/list-saved-data', methods=['GET'])
+@api.route('/list-saved-data', methods=['GET'])
 def list_saved_data():
     try:
         save_dir = os.path.join('saved_data')
@@ -185,7 +194,7 @@ def list_saved_data():
         }), 500
 
 
-@app.route('/load-saved-data', methods=['POST'])
+@api.route('/load-saved-data', methods=['POST'])
 def load_saved_data():
     try:
         # Get filename from request
@@ -226,6 +235,23 @@ def load_saved_data():
             'error': str(e)
         }), 500
 
+
+app.register_blueprint(api)
+# CORS(app)
+# CORS(appresources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": "*"}})
+CORS(
+    app,
+    resources={r"/api/*": {
+        "origins": [
+            "https://narrativedashboard.xyz",
+            "https://www.narrativedashboard.xyz",
+            "http://localhost:5000"
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }}
+)
 
 if __name__ == '__main__':
     app.run(debug=True)
