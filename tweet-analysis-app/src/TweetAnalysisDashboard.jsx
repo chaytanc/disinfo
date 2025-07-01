@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { apiService, useApi } from './apiUtils';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -29,6 +30,7 @@ export default function TweetAnalysisDashboard({ loadedData }) {
   }, [data, groupedData]);
   
   useEffect(() => {
+    // Initialize datasets on mount
     fetchDatasets();
   }, []);
 
@@ -69,14 +71,7 @@ export default function TweetAnalysisDashboard({ loadedData }) {
   // Fetch datasets function
   const fetchDatasets = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/post-datasets`, 
-      {        
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({})
-      });
+      const response = await apiService.getDatasets({});
       
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -97,18 +92,12 @@ export default function TweetAnalysisDashboard({ loadedData }) {
       const results = await Promise.all(
         selectedDatasets.map(async (datasetName) => {
           console.log(`Fetching data for dataset: ${datasetName}`);
-          const response = await fetch(`${API_BASE_URL}/trace-over-time`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              startDate,
-              endDate,
-              targetNarrative,
-              threshold,
-              file1: datasetName
-            }),
+          const response = await apiService.traceOverTime({
+            startDate,
+            endDate,
+            targetNarrative,
+            threshold,
+            file1: datasetName
           });
   
           if (!response.ok) {
@@ -153,16 +142,10 @@ export default function TweetAnalysisDashboard({ loadedData }) {
   const generateNarratives = async () => {
     setIsProcessing(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/generate-narratives`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await apiService.generateNarratives({
           filteredData: data,
           numNarratives
-        }),
-      });
+        });
       
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -188,12 +171,7 @@ export default function TweetAnalysisDashboard({ loadedData }) {
     setSaveMessage('');
     
     try {
-      const response = await fetch(`${API_BASE_URL}/save-filtered-data`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await apiService.saveFilteredData({ 
           filteredData: data,
           metadata: {
             startDate,
@@ -203,7 +181,6 @@ export default function TweetAnalysisDashboard({ loadedData }) {
             selectedDatasets,
             generatedAt: new Date().toISOString()
           }
-        }),
       });
       
       if (!response.ok) {
