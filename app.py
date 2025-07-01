@@ -6,15 +6,14 @@ import pandas as pd
 from sentence_transformers import SentenceTransformer
 from mlx_lm import load
 from preprocess import read_media
-from graph_sims import trace_over_time, graph_timeseries
+from graph_sims import trace_over_time
 import os
 import numpy as np
 import datetime
 import mlx.core as mx
-from transformers import AutoModelForCausalLM
 import gc
-import contextlib
 import torch
+from functools import wraps
 
 # Set MLX to use GPU
 mx.set_default_device(mx.gpu)
@@ -41,6 +40,34 @@ else:
 app = Flask(__name__)
 api = Blueprint("api", __name__, url_prefix="/api")
 
+def verify_firebase_token(f):
+    """Decorator to verify Firebase authentication token"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Get the authorization header
+        auth_header = request.headers.get('Authorization')
+        
+        if not auth_header:
+            return jsonify({'error': 'No authorization header provided'}), 401
+        
+        # Extract the token (assuming format: "Bearer <token>")
+        try:
+            token = auth_header.split(' ')[1]
+        except IndexError:
+            return jsonify({'error': 'Invalid authorization header format'}), 401
+        
+        try:
+            # Verify the token with Firebase Admin SDK
+            decoded_token = auth.verify_id_token(token)
+            # Add user info to request context for use in the route
+            request.user = decoded_token
+            return f(*args, **kwargs)
+        except Exception as e:
+            print(f"Token verification failed: {e}")
+            return jsonify({'error': 'Invalid or expired token'}), 401
+    
+    return decorated_function
+
 
 @api.before_request
 def reject_unknown_preflights():
@@ -52,6 +79,7 @@ def reject_unknown_preflights():
 
 
 @api.route('/post-datasets', methods=['POST'])
+@verify_firebase_token
 def api_post_datasets():
     """ Assumes every csv file in tweets_dir is compatible w analysis 
     (has Tweet, Datetime cols). Returns these in a jsonified list."""
@@ -68,6 +96,7 @@ def api_post_datasets():
     return jsonify(result)
 
 @api.route('/trace-over-time', methods=['POST'])
+@verify_firebase_token
 def api_trace_over_time():
     gc.collect()
     try:
@@ -116,6 +145,7 @@ def api_trace_over_time():
         }), 500
 
 @api.route('/generate-narratives', methods=['POST'])
+@verify_firebase_token
 def api_generate_narratives():
     data = request.json
     
@@ -132,7 +162,9 @@ def api_generate_narratives():
 
 
 @api.route('/save-filtered-data', methods=['POST'])
+@verify_firebase_token
 def save_filtered_data():
+    # TODO this needs to save to user's downloads
     try:
         # Get data from request
         data = request.json
@@ -177,6 +209,7 @@ def save_filtered_data():
 
 # Optional: Add an endpoint to list saved datasets
 @api.route('/list-saved-data', methods=['GET'])
+@verify_firebase_token
 def list_saved_data():
     try:
         save_dir = os.path.join('saved_data')
@@ -195,6 +228,7 @@ def list_saved_data():
 
 
 @api.route('/load-saved-data', methods=['POST'])
+@verify_firebase_token
 def load_saved_data():
     try:
         # Get filename from request
