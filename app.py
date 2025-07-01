@@ -237,15 +237,12 @@ def load_saved_data():
 
 
 app.register_blueprint(api)
-# CORS(app)
-# CORS(appresources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": "*"}})
 CORS(
     app,
     resources={r"/api/*": {
         "origins": [
             "https://narrativedashboard.xyz",
             "https://www.narrativedashboard.xyz",
-            "http://localhost:5000"
         ],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],

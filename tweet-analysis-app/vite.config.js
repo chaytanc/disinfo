@@ -11,4 +11,7 @@ export default defineConfig({
     hmr: { host: 'narrativedashboard.xyz', protocol: 'wss' },
     allowedHosts: true, 
   },
+  build: {
+    sourcemap: false
+  }
 })
