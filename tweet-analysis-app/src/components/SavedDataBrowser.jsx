@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { apiService } from '../apiUtils';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -14,7 +15,7 @@ export default function SavedDataBrowser({ onLoadData }) {
   const fetchSavedDatasets = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/list-saved-data`);
+      const response = await apiService.listSavedData();
       
       if (!response.ok) {
         throw new Error('Failed to fetch saved datasets');
@@ -42,14 +43,8 @@ export default function SavedDataBrowser({ onLoadData }) {
     setMessage('');
     
     try {
-      const response = await fetch(`${API_BASE_URL}/load-saved-data`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await apiService.loadSavedData({
           filename
-        }),
       });
       
       if (!response.ok) {
