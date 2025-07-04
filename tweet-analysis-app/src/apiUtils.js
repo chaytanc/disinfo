@@ -1,7 +1,40 @@
 import { auth } from './firebase';
+import DOMPurify from 'dompurify';
 
 // const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const API_BASE_URL = 'http://localhost:5000/api';
+
+// Input validation and sanitization
+export const validateAndSanitizeInput = {
+  targetNarrative: (input) => {
+    if (!input || typeof input !== 'string') {
+      throw new Error('Target narrative must be a non-empty string');
+    }
+    
+    // Length validation
+    if (input.length > 500) {
+      throw new Error('Target narrative must be less than 500 characters');
+    }
+    
+    if (input.length < 3) {
+      throw new Error('Target narrative must be at least 3 characters');
+    }
+    
+    // Use DOMPurify to sanitize the input
+    const sanitized = DOMPurify.sanitize(input, {
+      ALLOWED_TAGS: [], // No HTML tags allowed
+      ALLOWED_ATTR: [], // No attributes allowed
+      KEEP_CONTENT: true // Keep text content
+    }).trim();
+    
+    // Additional validation after sanitization
+    if (sanitized.length < 3) {
+      throw new Error('Target narrative must be at least 3 characters after sanitization');
+    }
+    
+    return sanitized;
+  }
+};
 
 // Helper function to get the current user's ID token
 const getAuthToken = async () => {
@@ -27,7 +60,10 @@ const makeAuthenticatedRequest = async (url, options = {}) => {
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error('Authentication failed. Please log in again.');
+      // Create a special error type for 401s that components can catch
+      const authError = new Error('Authentication failed. Please log in again.');
+      authError.isAuthError = true;
+      throw authError;
     }
     const errorData = await response.json();
     throw new Error(errorData.error || `${url} HTTP error! status: ${response.status}`);

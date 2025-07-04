@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { apiService } from './apiUtils';
-
-const API_BASE_URL = 'http://localhost:5000/api';
+import { apiService, validateAndSanitizeInput } from './apiUtils';
+import { useAuth } from './Auth';
 
 export default function TweetAnalysisDashboard({ loadedData }) {
+  const { logout } = useAuth();
+  
   // State variables
   const [data, setData] = useState([]);
   const [selectedTweet, setSelectedTweet] = useState(null);
@@ -68,21 +69,32 @@ export default function TweetAnalysisDashboard({ loadedData }) {
     }
   }, [loadedData]);
   
+  // Helper function to handle authentication errors
+  const handleAuthError = (error) => {
+    if (error.isAuthError) {
+      console.log('Authentication error detected, logging out user');
+      logout();
+    }
+  };
+  
   // Fetch datasets function
   const fetchDatasets = async () => {
     try {
       const result = await apiService.getDatasets({});
-
       console.log("Fetched datasets:", result.files);
       setDatasets(result.files);
     } catch (error) {
       console.error('Error fetching datasets:', error);
+      handleAuthError(error);
     }
   };
   
   const fetchFilteredData = async () => {
     setIsLoading(true);
     try {
+      // Validate and sanitize target narrative
+      const sanitizedNarrative = validateAndSanitizeInput.targetNarrative(targetNarrative);
+      
       // Wait for all selected datasets to be processed
       const results = await Promise.all(
         selectedDatasets.map(async (datasetName) => {
@@ -90,7 +102,7 @@ export default function TweetAnalysisDashboard({ loadedData }) {
           const result = await apiService.traceOverTime({
             startDate,
             endDate,
-            targetNarrative,
+            targetNarrative: sanitizedNarrative,
             threshold,
             file1: datasetName
           });
@@ -123,6 +135,7 @@ export default function TweetAnalysisDashboard({ loadedData }) {
       
     } catch (error) {
       console.error('Error fetching filtered data:', error);
+      handleAuthError(error);
     } finally {
       setIsLoading(false);
     }
@@ -141,6 +154,7 @@ export default function TweetAnalysisDashboard({ loadedData }) {
       
     } catch (error) {
       console.error('Error generating narratives:', error);
+      handleAuthError(error);
     } finally {
       setIsProcessing(false);
     }
@@ -174,6 +188,7 @@ export default function TweetAnalysisDashboard({ loadedData }) {
     } catch (error) {
       console.error('Error saving filtered data:', error);
       setSaveMessage(`Error: ${error.message}`);
+      handleAuthError(error);
     } finally {
       setIsSaving(false);
     }
