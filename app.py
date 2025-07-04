@@ -14,6 +14,13 @@ import mlx.core as mx
 import gc
 import torch
 from functools import wraps
+from firebase_admin import auth, credentials
+import firebase_admin
+import dotenv
+dotenv.load_dotenv()
+
+cred = credentials.Certificate(os.getenv("FIREBASE_ADMIN_SDK_KEY"))
+firebase_admin.initialize_app(cred)
 
 # Set MLX to use GPU
 mx.set_default_device(mx.gpu)
