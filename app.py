@@ -21,6 +21,18 @@ dotenv.load_dotenv()
 
 cred = credentials.Certificate(os.getenv("FIREBASE_ADMIN_SDK_KEY"))
 firebase_admin.initialize_app(cred)
+if os.getenv('FLASK_ENV') == 'development':
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://narrativedashboard.xyz",
+        "https://www.narrativedashboard.xyz",
+    ]
+else:
+    allowed_origins = [
+        "https://narrativedashboard.xyz",
+        "https://www.narrativedashboard.xyz",
+    ]
 
 # Set MLX to use GPU
 mx.set_default_device(mx.gpu)
@@ -79,9 +91,7 @@ def verify_firebase_token(f):
 @api.before_request
 def reject_unknown_preflights():
     if request.method == "OPTIONS" and \
-       request.headers.get("Origin") not in (
-           "https://narrativedashboard.xyz",
-           "https://www.narrativedashboard.xyz"):
+       request.headers.get("Origin") not in (allowed_origins):
         return "Forbidden", 403
 
 
@@ -97,6 +107,7 @@ def api_post_datasets():
         if f.endswith('.csv')
     ]
     result = {
+        'success': True,
         'files': files 
     }
     
@@ -134,6 +145,7 @@ def api_trace_over_time():
         
         # Return the filtered data
         result = {
+            'success': True,
             'filteredData': records,
             'summary': {
                 'totalTweets': len(filtered_df),
@@ -165,7 +177,7 @@ def api_generate_narratives():
     narratives_obj, *_ = narrative_generator.generate_narratives()
     
     # Return the results as an array
-    return jsonify({'narratives': narratives_obj})
+    return jsonify({'success': True, 'narratives': narratives_obj})
 
 
 @api.route('/save-filtered-data', methods=['POST'])
@@ -281,10 +293,7 @@ app.register_blueprint(api)
 CORS(
     app,
     resources={r"/api/*": {
-        "origins": [
-            "https://narrativedashboard.xyz",
-            "https://www.narrativedashboard.xyz",
-        ],
+        "origins": allowed_origins,
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True

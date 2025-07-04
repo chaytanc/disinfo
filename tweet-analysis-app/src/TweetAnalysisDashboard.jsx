@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { apiService, useApi } from './apiUtils';
+import { apiService } from './apiUtils';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -71,13 +71,8 @@ export default function TweetAnalysisDashboard({ loadedData }) {
   // Fetch datasets function
   const fetchDatasets = async () => {
     try {
-      const response = await apiService.getDatasets({});
-      
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      
-      const result = await response.json();
+      const result = await apiService.getDatasets({});
+
       console.log("Fetched datasets:", result.files);
       setDatasets(result.files);
     } catch (error) {
@@ -92,19 +87,14 @@ export default function TweetAnalysisDashboard({ loadedData }) {
       const results = await Promise.all(
         selectedDatasets.map(async (datasetName) => {
           console.log(`Fetching data for dataset: ${datasetName}`);
-          const response = await apiService.traceOverTime({
+          const result = await apiService.traceOverTime({
             startDate,
             endDate,
             targetNarrative,
             threshold,
             file1: datasetName
           });
-  
-          if (!response.ok) {
-            throw new Error(`Failed to fetch data for ${datasetName}`);
-          }
-  
-          const result = await response.json();
+ 
           console.log(`Received ${result.filteredData.length} items for ${datasetName}`);
           
           // Just add the dataset name, keep Datetime as is
@@ -142,16 +132,11 @@ export default function TweetAnalysisDashboard({ loadedData }) {
   const generateNarratives = async () => {
     setIsProcessing(true);
     try {
-      const response = await apiService.generateNarratives({
+      const result = await apiService.generateNarratives({
           filteredData: data,
           numNarratives
         });
-      
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      
-      const result = await response.json();
+
       setNarratives(result.narratives);
       
     } catch (error) {
@@ -171,7 +156,7 @@ export default function TweetAnalysisDashboard({ loadedData }) {
     setSaveMessage('');
     
     try {
-      const response = await apiService.saveFilteredData({ 
+      const result = await apiService.saveFilteredData({ 
           filteredData: data,
           metadata: {
             startDate,
@@ -182,12 +167,8 @@ export default function TweetAnalysisDashboard({ loadedData }) {
             generatedAt: new Date().toISOString()
           }
       });
+
       
-      if (!response.ok) {
-        throw new Error('Failed to save data');
-      }
-      
-      const result = await response.json();
       setSaveMessage(`Successfully saved ${result.rowCount} records as ${result.filename}`);
       
     } catch (error) {

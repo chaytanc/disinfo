@@ -30,7 +30,7 @@ const makeAuthenticatedRequest = async (url, options = {}) => {
       throw new Error('Authentication failed. Please log in again.');
     }
     const errorData = await response.json();
-    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    throw new Error(errorData.error || `${url} HTTP error! status: ${response.status}`);
   }
 
   return await response.json();
