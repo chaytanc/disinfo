@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { apiService, validateAndSanitizeInput } from './apiUtils';
 import { useAuth } from './Auth';
-import CsvUpload from './CsvUpload';
+import CsvUpload from './components/CsvUpload';
 
 export default function TweetAnalysisDashboard({ loadedData }) {
   const { logout } = useAuth();
@@ -41,23 +41,43 @@ export default function TweetAnalysisDashboard({ loadedData }) {
     fetchDatasets();
   }, []);
 
+  // Normalize data types for consistent usage
+  const normalizeDataTypes = (data) => {
+    return data.map(item => ({
+      ...item,
+      Similarity: item.Similarity !== null && item.Similarity !== undefined 
+        ? (typeof item.Similarity === 'number' ? item.Similarity : parseFloat(item.Similarity) || 0)
+        : 0,
+      Datetime: typeof item.Datetime === 'string' ? item.Datetime : item.Datetime?.toString() || '',
+      Tweet: item.Tweet || '',
+      // Add other fields that might need normalization
+      LikesCount: item.LikesCount ? parseInt(item.LikesCount) || 0 : 0,
+      SharesCount: item.SharesCount ? parseInt(item.SharesCount) || 0 : 0,
+      CommentsCount: item.CommentsCount ? parseInt(item.CommentsCount) || 0 : 0,
+      ViewsCount: item.ViewsCount ? parseInt(item.ViewsCount) || 0 : 0
+    }));
+  };
+
   // Handle loadedData changes
   useEffect(() => {
     if (loadedData && loadedData.length > 0) {
       console.log("Processing loaded data in dashboard:", loadedData.length, "records");
       
+      // Normalize data types first
+      const normalizedData = normalizeDataTypes(loadedData);
+      
       // Group the data by dataset name
       const grouped = {};
-      const datasetNames = [...new Set(loadedData.map(item => item.datasetName || 'unknown'))];
+      const datasetNames = [...new Set(normalizedData.map(item => item.datasetName || 'unknown'))];
       
       datasetNames.forEach(datasetName => {
-        grouped[datasetName] = loadedData
+        grouped[datasetName] = normalizedData
           .filter(d => (d.datasetName || 'unknown') === datasetName)
           .sort((a, b) => new Date(a.Datetime) - new Date(b.Datetime));
       });
       
-      // Update with loaded data
-      setData(loadedData);
+      // Update with normalized data
+      setData(normalizedData);
       setGroupedData(grouped);
       
       // Extract parameters from the first record if available
@@ -116,13 +136,11 @@ export default function TweetAnalysisDashboard({ loadedData }) {
       console.log("Fetched server datasets:", result.files);
       
       // Combine server files with uploaded dataset names (but not data)
-      setDatasets(prev => {
-        const uploadedNames = Object.keys(uploadedDatasets);
-        const serverFiles = result.files;
-        // Remove duplicates and combine
-        const combined = [...new Set([...serverFiles, ...uploadedNames])];
-        return combined;
-      });
+      const uploadedNames = Object.keys(uploadedDatasets);
+      const serverFiles = result.files;
+      // Remove duplicates and combine
+      const combined = [...new Set([...serverFiles, ...uploadedNames])];
+      setDatasets(combined);
     } catch (error) {
       console.error('Error fetching datasets:', error);
       handleAuthError(error);
@@ -175,6 +193,10 @@ export default function TweetAnalysisDashboard({ loadedData }) {
   
       // Flatten the results and then sort chronologically by Datetime
       let combinedData = results.flat();
+      
+      // Normalize data types for consistent usage
+      combinedData = normalizeDataTypes(combinedData);
+      
       combinedData.sort((a, b) => a.Datetime - b.Datetime);
       
       console.log("Combined and sorted data points:", combinedData.length);
@@ -216,7 +238,7 @@ export default function TweetAnalysisDashboard({ loadedData }) {
     }
   };
   
-  const saveFilteredData = async () => {
+  const saveFilteredData = () => {
     if (data.length === 0) {
       setSaveMessage('No data to save. Please apply filters first.');
       return;
@@ -226,25 +248,68 @@ export default function TweetAnalysisDashboard({ loadedData }) {
     setSaveMessage('');
     
     try {
-      const result = await apiService.saveFilteredData({ 
-          filteredData: data,
-          metadata: {
-            startDate,
-            endDate,
-            targetNarrative,
-            threshold,
-            selectedDatasets,
-            generatedAt: new Date().toISOString()
-          }
-      });
+      // Create metadata object
+      const metadata = {
+        startDate,
+        endDate,
+        targetNarrative,
+        threshold,
+        selectedDatasets,
+        generatedAt: new Date().toISOString(),
+        totalRecords: data.length
+      };
 
+      // Add metadata as a comment at the top of CSV
+      const metadataComment = `# Analysis Results - Generated ${metadata.generatedAt}\n# Target: ${metadata.targetNarrative}\n# Date Range: ${metadata.startDate} to ${metadata.endDate}\n# Threshold: ${metadata.threshold}\n# Datasets: ${metadata.selectedDatasets.join(', ')}\n# Total Records: ${metadata.totalRecords}\n\n`;
+
+      // Convert data to CSV format
+      const headers = Object.keys(data[0]);
+      const csvContent = [
+        headers.join(','),
+        ...data.map(row => 
+          headers.map(header => {
+            const value = row[header];
+            // Handle null/undefined values and escape quotes
+            if (value === null || value === undefined) return '';
+            const stringValue = String(value);
+            // Escape quotes and wrap in quotes if contains comma, quote, or newline
+            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+              return `"${stringValue.replace(/"/g, '""')}"`;
+            }
+            return stringValue;
+          }).join(',')
+        )
+      ].join('\n');
+
+      const fullContent = metadataComment + csvContent;
+
+      // Create downloadable file
+      const blob = new Blob([fullContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
       
-      setSaveMessage(`Successfully saved ${result.rowCount} records as ${result.filename}`);
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      const datasetNames = selectedDatasets.join('_').replace(/[^a-zA-Z0-9_]/g, '');
+      const filename = `analysis_${datasetNames}_${timestamp}.csv`;
+      
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        setSaveMessage(`Successfully downloaded ${data.length} records as ${filename}`);
+      } else {
+        setSaveMessage('Download not supported in this browser');
+      }
       
     } catch (error) {
       console.error('Error saving filtered data:', error);
       setSaveMessage(`Error: ${error.message}`);
-      handleAuthError(error);
     } finally {
       setIsSaving(false);
     }
@@ -268,6 +333,7 @@ export default function TweetAnalysisDashboard({ loadedData }) {
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      
       return (
         <div className="bg-white p-4 border border-gray-300 rounded shadow-lg">
           <p className="text-sm text-gray-600">{new Date(data.Datetime).toLocaleString()}</p>
