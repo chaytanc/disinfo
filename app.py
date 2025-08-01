@@ -113,6 +113,66 @@ def api_post_datasets():
     
     return jsonify(result)
 
+@api.route('/trace-over-time-upload', methods=['POST'])
+@verify_firebase_token
+def api_trace_over_time_upload():
+    """Process uploaded CSV data (sent as JSON) instead of server files"""
+    gc.collect()
+    try:
+        # Get parameters from request
+        data = request.json
+        uploaded_data = data.get('uploadedData')
+        
+        if not uploaded_data:
+            return jsonify({'error': 'No uploaded data provided'}), 400
+            
+        # Convert uploaded JSON data to DataFrame
+        df = pd.DataFrame(uploaded_data)
+        
+        # Add the required preprocessing that read_media does
+        try:
+            df["AuthorTweet"] = "Author: " + df["ChannelName"] + "\nTweet: " + df["Tweet"]
+        except KeyError:
+            df["AuthorTweet"] = "Tweet: " + df["Tweet"]
+        
+        # Convert datetime strings to datetime objects for filtering
+        df['Datetime'] = pd.to_datetime(df['Datetime'])
+        
+        start_date = data.get('startDate')
+        end_date = data.get('endDate')
+        target_narrative = data.get('targetNarrative')
+        threshold = data.get('threshold', 0.5)
+        
+        # Call your trace_over_time function
+        filtered_df = trace_over_time(df, sent_model, target_narrative, [start_date, end_date], sim_threshold=threshold)
+        
+        # Replace NaN values with None (which becomes null in JSON)
+        filtered_df = filtered_df.replace({np.nan: None})
+        gc.collect()
+        
+        # Convert DataFrame to records
+        records = filtered_df.to_dict('records')
+        
+        # Return the filtered data
+        result = {
+            'success': True,
+            'filteredData': records,
+            'summary': {
+                'totalTweets': len(filtered_df),
+                'dateRange': f"{start_date} to {end_date}",
+                'threshold': threshold,
+                'targetNarrative': target_narrative
+            }
+        }
+        
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({
+            'error': str(e)
+        }), 500
+
 @api.route('/trace-over-time', methods=['POST'])
 @verify_firebase_token
 def api_trace_over_time():

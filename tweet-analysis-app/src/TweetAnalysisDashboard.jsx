@@ -2,28 +2,34 @@ import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { apiService, validateAndSanitizeInput } from './apiUtils';
 import { useAuth } from './Auth';
+import CsvUpload from './CsvUpload';
 
 export default function TweetAnalysisDashboard({ loadedData }) {
   const { logout } = useAuth();
   
-  // State variables
-  const [data, setData] = useState([]);
-  const [selectedTweet, setSelectedTweet] = useState(null);
-  const [narratives, setNarratives] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
+  // Analysis Results State
+  const [data, setData] = useState([]); // Final filtered/processed tweets after analysis
+  const [selectedTweet, setSelectedTweet] = useState(null); // Currently selected tweet for detail view
+  const [narratives, setNarratives] = useState([]); // Generated narrative summaries from clustering
+  const [groupedData, setGroupedData] = useState({}); // Data organized by dataset name for chart visualization
   
-  // Filter parameters
+  // UI Loading States
+  const [isLoading, setIsLoading] = useState(false); // True during API calls for filtering
+  const [isProcessing, setIsProcessing] = useState(false); // True during narrative generation
+  const [isSaving, setIsSaving] = useState(false); // True during save operations
+  const [saveMessage, setSaveMessage] = useState(''); // Status message for save operations
+  
+  // Analysis Parameters
   const [startDate, setStartDate] = useState('2020-11-01');
   const [endDate, setEndDate] = useState('2020-12-01');
   const [targetNarrative, setTargetNarrative] = useState('The 2020 election was stolen');
-  const [threshold, setThreshold] = useState(0.5);
-  const [numNarratives, setNumNarratives] = useState(3);
-  const [groupedData, setGroupedData] = useState({});
-  const [datasets, setDatasets] = useState(["full_tweets.csv"]);
-  const [selectedDatasets, setSelectedDatasets] = useState(["full_tweets.csv"]);
+  const [threshold, setThreshold] = useState(0.5); // Similarity threshold (0-1)
+  const [numNarratives, setNumNarratives] = useState(3); // Number of narrative clusters to generate
+  
+  // Dataset Management
+  const [datasets, setDatasets] = useState(["full_tweets.csv"]); // Available dataset names (server + uploaded)
+  const [selectedDatasets, setSelectedDatasets] = useState(["full_tweets.csv"]); // Currently selected for analysis
+  const [uploadedDatasets, setUploadedDatasets] = useState({}); // Stores actual CSV data: {filename: parsedData[]}
   
   useEffect(() => {
     console.log("Data changed:", data.length);
@@ -77,12 +83,46 @@ export default function TweetAnalysisDashboard({ loadedData }) {
     }
   };
   
-  // Fetch datasets function
+  // Handle uploaded CSV data - stores data and adds filename to available datasets
+  const handleDataUploaded = (uploadData) => {
+    const fileName = uploadData.fileName;
+    
+    // Store the actual parsed CSV data
+    setUploadedDatasets(prev => ({
+      ...prev,
+      [fileName]: uploadData.data
+    }));
+    
+    // Add filename to available datasets list if not already present
+    setDatasets(prev => {
+      if (!prev.includes(fileName)) {
+        return [...prev, fileName];
+      }
+      return prev;
+    });
+    
+    console.log(`Uploaded ${fileName}: ${uploadData.totalRows} rows stored`);
+  };
+
+  // Check if a dataset name refers to uploaded data (vs server file)
+  const isUploadedDataset = (datasetName) => {
+    return datasetName in uploadedDatasets;
+  };
+
+  // Fetch server datasets and combine with uploaded dataset names
   const fetchDatasets = async () => {
     try {
       const result = await apiService.getDatasets({});
-      console.log("Fetched datasets:", result.files);
-      setDatasets(result.files);
+      console.log("Fetched server datasets:", result.files);
+      
+      // Combine server files with uploaded dataset names (but not data)
+      setDatasets(prev => {
+        const uploadedNames = Object.keys(uploadedDatasets);
+        const serverFiles = result.files;
+        // Remove duplicates and combine
+        const combined = [...new Set([...serverFiles, ...uploadedNames])];
+        return combined;
+      });
     } catch (error) {
       console.error('Error fetching datasets:', error);
       handleAuthError(error);
@@ -98,18 +138,34 @@ export default function TweetAnalysisDashboard({ loadedData }) {
       // Wait for all selected datasets to be processed
       const results = await Promise.all(
         selectedDatasets.map(async (datasetName) => {
-          console.log(`Fetching data for dataset: ${datasetName}`);
-          const result = await apiService.traceOverTime({
-            startDate,
-            endDate,
-            targetNarrative: sanitizedNarrative,
-            threshold,
-            file1: datasetName
-          });
+          console.log(`Processing dataset: ${datasetName}`);
+          
+          let result;
+          if (isUploadedDataset(datasetName)) {
+            // Use upload API for uploaded datasets
+            console.log(`Using uploaded data for: ${datasetName}`);
+            result = await apiService.traceOverTimeUpload({
+              uploadedData: uploadedDatasets[datasetName],
+              startDate,
+              endDate,
+              targetNarrative: sanitizedNarrative,
+              threshold
+            });
+          } else {
+            // Use server file API for server datasets
+            console.log(`Using server file for: ${datasetName}`);
+            result = await apiService.traceOverTime({
+              startDate,
+              endDate,
+              targetNarrative: sanitizedNarrative,
+              threshold,
+              file1: datasetName
+            });
+          }
  
           console.log(`Received ${result.filteredData.length} items for ${datasetName}`);
           
-          // Just add the dataset name, keep Datetime as is
+          // Add the dataset name to each record
           return result.filteredData.map(d => ({
             ...d,
             datasetName
@@ -227,6 +283,12 @@ export default function TweetAnalysisDashboard({ loadedData }) {
   return (
     <div className="bg-gray-50 p-6 rounded-lg shadow mx-auto max-w-6xl">
       <h2 className="text-2xl font-bold mb-6">Tweet Narrative Analysis Dashboard</h2>
+      
+      {/* Upload Section */}
+      <div className="mb-6">
+        <CsvUpload onDataUploaded={handleDataUploaded} />
+      </div>
+      
       {/* Filter Controls */}
       <div className="bg-white p-4 rounded shadow mb-6">
         <h3 className="font-bold mb-4">Analysis Parameters</h3>

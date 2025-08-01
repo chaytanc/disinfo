@@ -84,9 +84,20 @@ export const apiService = {
     });
   },
 
-  // Trace over time
+  // Trace over time (for server files)
   traceOverTime: async (params) => {
     return await makeAuthenticatedRequest('/trace-over-time', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    });
+  },
+
+  // Trace over time (for uploaded CSV data)
+  traceOverTimeUpload: async (params) => {
+    return await makeAuthenticatedRequest('/trace-over-time-upload', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

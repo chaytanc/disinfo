@@ -12,6 +12,7 @@
     "@testing-library/user-event": "^13.5.0",
     "dompurify": "^3.2.6",
     "firebase": "^11.9.1",
+    "papaparse": "^5.5.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "recharts": "^2.15.2",
@@ -21,7 +22,7 @@
   "scripts": {
     "dev": "vite",
     "build": "GENERATE_SOURCEMAP=false vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --port 3000"
   },
   "eslintConfig": {
     "extends": [
