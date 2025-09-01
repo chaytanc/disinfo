@@ -90,7 +90,7 @@ def verify_firebase_token(f):
 
 @api.before_request
 def reject_unknown_preflights():
-       request.headers.get("Origin") not in allowed_origins:
+    if request.headers.get("Origin") not in allowed_origins:
         return "Forbidden", 403
 
 
