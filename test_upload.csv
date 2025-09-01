@@ -1,0 +1,6 @@
+Tweet,Datetime,ChannelName,PostId,Platform
+"Election integrity is crucial for democracy","2020-11-15 14:30:00","TestUser1",12345,"Twitter"
+"Voting systems need better security measures","2020-11-16 09:15:00","TestUser2",12346,"Twitter"
+"Mail-in ballots require proper verification","2020-11-17 16:45:00","TestUser3",12347,"Twitter"
+"The 2020 election had irregularities that should be investigated","2020-11-18 11:20:00","TestUser4",12348,"Twitter"
+"Voter fraud allegations need thorough examination","2020-11-19 20:10:00","TestUser5",12349,"Twitter"

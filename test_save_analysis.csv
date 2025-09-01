@@ -1,0 +1,11 @@
+# Analysis Results - Generated 2024-01-15T10:30:00.000Z
+# Target: The 2020 election was stolen
+# Date Range: 2020-11-15 to 2020-11-18
+# Threshold: 0.6
+# Datasets: test_upload.csv
+# Total Records: 3
+
+Tweet,Datetime,ChannelName,PostId,Platform,Similarity,datasetName
+"The 2020 election had irregularities that should be investigated","2020-11-18 11:20:00","TestUser4",12348,"Twitter",0.75,"test_upload.csv"
+"Voter fraud allegations need thorough examination","2020-11-19 20:10:00","TestUser5",12349,"Twitter",0.68,"test_upload.csv"
+"Mail-in ballots require proper verification","2020-11-17 16:45:00","TestUser3",12347,"Twitter",0.62,"test_upload.csv"

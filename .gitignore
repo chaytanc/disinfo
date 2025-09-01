@@ -2,6 +2,30 @@
 __pycache__/
 *.py[cod]
 *$py.class
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+.env
+.env.*.local
+disinfo-dashboard-firebase-adminsdk
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # C extensions
 *.so
@@ -13,6 +37,8 @@ __pycache__/
 saved_data/
 tweets/full_mediamix2024.csv
 tweets/mediamix2024.csv
+
+node_modules/
 
 # Distribution / packaging
 .Python
