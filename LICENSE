@@ -1,0 +1,47 @@
+MIT License with Additional Terms
+
+Copyright (c) 2025 Chaytan Inman
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+## Additional Terms
+
+1. **Attribution Requirement**: Any publication, presentation, or derivative work 
+   that uses this software must include appropriate citation and attribution to 
+   the original work and author(s).
+
+2. **Shared Infrastructure**: This software may include access to shared 
+   infrastructure (authentication services, APIs, compute resources) provided 
+   by the copyright holder. Use of such shared infrastructure is subject to 
+   the Usage Guidelines (USAGE_GUIDELINES.md) and reasonable use policies.
+
+3. **Commercial Use Notification**: While commercial use is permitted under this 
+   license, users must contact the copyright holder for high-volume 
+   commercial applications of >1000 API calls / day to ensure proper use.
+
+4. **Research Ethics**: Users conducting research with this software are expected 
+   to follow applicable research ethics guidelines, data privacy laws, and 
+   responsible disclosure practices. The Software shall not be used for commercial
+   marketing, conservative political research, thinktanks, 
+   or partisan, conservative institutions of any kind, 
+   nor by any social media company for any reason whatsoever.
+
+5. **Community Contribution**: Users benefiting from shared infrastructure are 
+   encouraged to contribute improvements, bug fixes, and enhancements back to 
+   the community through appropriate channels.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
