@@ -24,7 +24,7 @@ The system uses MLX-optimized machine learning models for Apple Silicon GPU acce
 
 ### 1. Clone and Setup Backend
 ```bash
-git clone <repository-url>
+git clone https://github.com/chaytanc/disinfo.git
 cd disinfo
 
 # Create virtual environment with Python 3.11
