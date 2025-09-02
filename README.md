@@ -27,8 +27,8 @@ The system uses MLX-optimized machine learning models for Apple Silicon GPU acce
 git clone <repository-url>
 cd disinfo
 
-# Create virtual environment
-python -m venv .venv
+# Create virtual environment with Python 3.11
+python3.11 -m venv .venv
 source .venv/bin/activate
 
 # Install dependencies
