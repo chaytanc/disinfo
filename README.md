@@ -69,23 +69,8 @@ npm run dev
 
 **Questions?** See [Usage Guidelines](USAGE_GUIDELINES.md) for full details or contact us via GitHub Issues.
 
-## Architecture
+## Architecture Features
 
-### Backend (Flask API)
-- **Flask** REST API with Firebase authentication
-- **MLX framework** for Apple Silicon GPU acceleration  
-- **SentenceTransformer** for semantic similarity scoring
-- **Mistral LLMs** for narrative generation and polarity analysis
-- **Pandas** for data processing and time-series analysis
-
-### Frontend (React Dashboard)
-- **React 19** with Vite build system
-- **TailwindCSS** for responsive design
-- **Recharts** for interactive data visualization
-- **Papa Parse** for client-side CSV processing
-- **Firebase Authentication** for user management
-
-### Key Features
 - **Client-side file processing** for security (no files stored on server)
 - **Real-time similarity analysis** with configurable thresholds
 - **Multi-dataset comparison** for cross-platform analysis
