@@ -1,6 +1,7 @@
 # The Tweet Narrative Analysis Dashboard
 
-A comprehensive platform for analyzing narrative similarity and disinformation spread across social media datasets using machine learning and semantic analysis.
+A comprehensive platform for analyzing narrative similarity and disinformation spread across social media datasets using machine learning and semantic analysis.  
+
 Please cite this paper if you use this for your own papers: [https://arxiv.org/abs/2507.20066](https://arxiv.org/abs/2507.20066)
 You can view the same paper in a more user friendly markdown here: [https://chaytanc.github.io/projects/disinfo-research/](https://chaytanc.github.io/projects/disinfo-research/)
 
