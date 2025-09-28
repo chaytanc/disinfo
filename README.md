@@ -10,7 +10,6 @@ This platform enables researchers to:
 - **Upload and analyze** social media datasets (Twitter/X, etc.)
 - **Track narrative similarity** over time using sentence transformers
 - **Generate automated summaries** of narrative clusters using LLMs
-- **Visualize trends** in disinformation spread through interactive dashboards
 - **Export analysis results** for further research
 
 The system uses MLX-optimized machine learning models for Apple Silicon GPU acceleration and provides both a REST API backend and React frontend.
@@ -48,7 +47,9 @@ npm run dev
 ### 3. Access Application
 - Open `http://localhost:3000`
 - **Sign in with Google/Email** (uses shared authentication)
-- Upload CSV datasets or use sample data
+  - NOTE: you should have an account set up through contacting Chaytan. If you don't, please contact me through first at chaytan@uw.edu
+- Upload your own CSV datasets. Sample datasets may have access issues currently.
+  - A sample dataset is available to download from this repository: sample_data.csv
 - Run analysis and visualize results
 
 **That's it!** No configuration needed - the shared infrastructure handles authentication and setup.
@@ -68,14 +69,6 @@ npm run dev
 **Why guidelines?** This project uses shared infrastructure (authentication, compute resources) to enable immediate access for researchers. The guidelines ensure fair use and project sustainability.
 
 **Questions?** See [Usage Guidelines](USAGE_GUIDELINES.md) for full details or contact us via GitHub Issues.
-
-## Architecture Features
-
-- **Client-side file processing** for security (no files stored on server)
-- **Real-time similarity analysis** with configurable thresholds
-- **Multi-dataset comparison** for cross-platform analysis
-- **Automated narrative clustering** using KMeans + LLM summarization
-- **Time-series visualization** of narrative spread patterns
 
 ## Data Format Requirements
 
@@ -123,7 +116,6 @@ Click the **Help** button in the dashboard for detailed formatting requirements 
 4. Submit a pull request
 
 **Please read [Usage Guidelines](USAGE_GUIDELINES.md)** before contributing.
-
 
 ## License
 
