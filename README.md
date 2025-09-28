@@ -49,7 +49,7 @@ npm run dev
 - **Sign in with Google/Email** (uses shared authentication)
   - NOTE: you should have an account set up through contacting Chaytan. If you don't, please contact me through first at chaytan@uw.edu
 - Upload your own CSV datasets. Sample datasets may have access issues currently.
-  - A sample dataset is available to download from this repository: sample_data.csv
+  - Many sample datasets are available to download from this repository: tweets/channel_datasets
 - Run analysis and visualize results
 
 **That's it!** No configuration needed - the shared infrastructure handles authentication and setup.
