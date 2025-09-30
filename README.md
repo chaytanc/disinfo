@@ -17,6 +17,8 @@ This platform enables researchers to:
 
 The system uses MLX-optimized machine learning models for Apple Silicon GPU acceleration and provides both a REST API backend and React frontend.
 
+![30secdemo(1)](https://github.com/user-attachments/assets/907c904b-f67c-4948-92fb-ae46b47659b8)
+
 ## ⚡ Quick Start
 
 ### Prerequisites
