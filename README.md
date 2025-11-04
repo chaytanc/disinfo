@@ -1,6 +1,9 @@
-# Disinformation Analysis Platform
+# The Tweet Narrative Analysis Dashboard
 
-A comprehensive platform for analyzing narrative similarity and disinformation spread across social media datasets using machine learning and semantic analysis.
+A comprehensive platform for analyzing narrative similarity and disinformation spread across social media datasets using machine learning and semantic analysis.  
+
+Please cite this paper if you use this for your own papers: [https://arxiv.org/abs/2507.20066](https://arxiv.org/abs/2507.20066)  
+You can view the same paper in a more user friendly markdown here: [https://chaytanc.github.io/projects/disinfo-research/](https://chaytanc.github.io/projects/disinfo-research/)
 
 > **🔥 Quick Start**: This project includes **shared infrastructure** for immediate access. No setup required - just clone and run! See [Usage Guidelines](USAGE_GUIDELINES.md) for terms and community expectations.
 
@@ -10,10 +13,11 @@ This platform enables researchers to:
 - **Upload and analyze** social media datasets (Twitter/X, etc.)
 - **Track narrative similarity** over time using sentence transformers
 - **Generate automated summaries** of narrative clusters using LLMs
-- **Visualize trends** in disinformation spread through interactive dashboards
 - **Export analysis results** for further research
 
 The system uses MLX-optimized machine learning models for Apple Silicon GPU acceleration and provides both a REST API backend and React frontend.
+
+![30secdemo(1)](https://github.com/user-attachments/assets/907c904b-f67c-4948-92fb-ae46b47659b8)
 
 ## ⚡ Quick Start
 
@@ -24,11 +28,11 @@ The system uses MLX-optimized machine learning models for Apple Silicon GPU acce
 
 ### 1. Clone and Setup Backend
 ```bash
-git clone <repository-url>
+git clone https://github.com/chaytanc/disinfo.git
 cd disinfo
 
-# Create virtual environment
-python -m venv .venv
+# Create virtual environment with Python 3.11
+python3.11 -m venv .venv
 source .venv/bin/activate
 
 # Install dependencies
@@ -48,7 +52,9 @@ npm run dev
 ### 3. Access Application
 - Open `http://localhost:3000`
 - **Sign in with Google/Email** (uses shared authentication)
-- Upload CSV datasets or use sample data
+  - NOTE: you should have an account set up through contacting Chaytan. If you don't, please contact me through first at chaytan@uw.edu
+- Upload your own CSV datasets. Sample datasets may have access issues currently.
+  - Many sample datasets are available to download from this repository: tweets/channel_datasets
 - Run analysis and visualize results
 
 **That's it!** No configuration needed - the shared infrastructure handles authentication and setup.
@@ -68,29 +74,6 @@ npm run dev
 **Why guidelines?** This project uses shared infrastructure (authentication, compute resources) to enable immediate access for researchers. The guidelines ensure fair use and project sustainability.
 
 **Questions?** See [Usage Guidelines](USAGE_GUIDELINES.md) for full details or contact us via GitHub Issues.
-
-## Architecture
-
-### Backend (Flask API)
-- **Flask** REST API with Firebase authentication
-- **MLX framework** for Apple Silicon GPU acceleration  
-- **SentenceTransformer** for semantic similarity scoring
-- **Mistral LLMs** for narrative generation and polarity analysis
-- **Pandas** for data processing and time-series analysis
-
-### Frontend (React Dashboard)
-- **React 19** with Vite build system
-- **TailwindCSS** for responsive design
-- **Recharts** for interactive data visualization
-- **Papa Parse** for client-side CSV processing
-- **Firebase Authentication** for user management
-
-### Key Features
-- **Client-side file processing** for security (no files stored on server)
-- **Real-time similarity analysis** with configurable thresholds
-- **Multi-dataset comparison** for cross-platform analysis
-- **Automated narrative clustering** using KMeans + LLM summarization
-- **Time-series visualization** of narrative spread patterns
 
 ## Data Format Requirements
 
@@ -138,7 +121,6 @@ Click the **Help** button in the dashboard for detailed formatting requirements 
 4. Submit a pull request
 
 **Please read [Usage Guidelines](USAGE_GUIDELINES.md)** before contributing.
-
 
 ## License
 
